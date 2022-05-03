@@ -1,0 +1,21 @@
+[package]
+name = "galactic-wars"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[features]
+default = [ ]
+debug = ["camera_plugin/debug", "bevy-inspector-egui" ]
+
+[dependencies]
+bevy = "0.7"
+camera_plugin = { path = "camera_plugin" }
+board_plugin = { path = "board_plugin" }
+bevy-inspector-egui = { version = "0.10", optional = true }
+bevy_prototype_lyon = "0.5.0"
+
+[workspace]
+members = [ 
+    "camera_plugin","board_plugin"
+ ]
