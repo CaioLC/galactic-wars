@@ -19,7 +19,7 @@ fn camera_setup(mut commands: Commands) {
         .spawn_bundle(OrthographicCameraBundle {
             transform: Transform::from_xyz(0.0, 0.0, 8.0).looking_at(Vec3::default(), Vec3::Y),
             orthographic_projection: OrthographicProjection {
-                scale: 0.01,
+                scale: 0.05,
                 ..default()
             },
             ..OrthographicCameraBundle::new_3d()
