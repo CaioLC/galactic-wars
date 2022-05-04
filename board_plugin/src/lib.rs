@@ -6,32 +6,23 @@ use bevy::{
         render_resource::VertexFormat,
     },
 };
+mod components;
+mod systems;
 
-#[derive(Component)]
-struct Ship {
-    movement_speed: f32,
-}
-
-enum ShipType {
-    Trade,
-    Fighter,
-}
-
-#[derive(Component)]
-struct Planet {
-    // no_of_ships: i32,
-// building: ShipType,
-}
-
+pub use components::*;
 pub struct BoardPlugin;
 
 impl Plugin for BoardPlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system(setup);
+        app.insert_resource(FighterTimer(Timer::from_seconds(2.0, true)))
+            .insert_resource(TraderTimer(Timer::from_seconds(5.0, true)))
+            .add_startup_system(setup)
+            .add_system(systems::production::produce_fighters);
     }
 }
 
 fn setup(
+    asset_server: Res<AssetServer>,
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
@@ -43,23 +34,53 @@ fn setup(
         &mut meshes,
         &mut materials,
     ));
+
     commands
         .spawn_bundle(generate_planet(
-            0.45,
+            1.45,
             Color::hex("ffd891").unwrap(),
             Transform::default(),
             &mut meshes,
             &mut materials,
         ))
-        .insert(Planet {});
-    
-    commands
-        .spawn_bundle(generate_ship(ShipType::Fighter, Transform::from_xyz(2., 2., 0.), &mut meshes, &mut materials))
-        .insert(Ship{ movement_speed: 2.});
+        .insert(Planet::default());
+        // ADD TEXT3D OVERLAY WITH BEVY_TEXT_MESH: https://crates.io/crates/bevy_text_mesh
+        // .with_children(|parent| {
+            // parent.spawn_bundle(Text2dBundle {
+                // text: Text::with_section(
+                    // "0".to_string(),
+                    // TextStyle {
+                        // font: asset_server.load("fonts/ShareTechMono.ttf"),
+                        // font_size: 25.,
+                        // color: Color::BLACK,
+                    // },
+                    // TextAlignment {
+                        // vertical: VerticalAlign::Center,
+                        // horizontal: HorizontalAlign::Center,
+                    // },
+                // ),
+                // transform: Transform::from_translation(Vec3::new(0., 0., 1.)),
+                // ..Default::default()
+            // });
+        // });
 
     commands
-        .spawn_bundle(generate_ship(ShipType::Trade, Transform::from_xyz(-2., -2., 0.), &mut meshes, &mut materials))
-        .insert(Ship{ movement_speed: 2.});
+        .spawn_bundle(generate_ship(
+            ShipType::Fighter,
+            Transform::from_xyz(2., 2., 0.),
+            &mut meshes,
+            &mut materials,
+        ))
+        .insert(Ship { movement_speed: 2. });
+
+    commands
+        .spawn_bundle(generate_ship(
+            ShipType::Trade,
+            Transform::from_xyz(-2., -2., 0.),
+            &mut meshes,
+            &mut materials,
+        ))
+        .insert(Ship { movement_speed: 2. });
     // .spawn_bundle(generate_ship(ship_handle, &mut meshes, &mut materials))
     // .insert(Ship { movement_speed: 1., life: 2 });
 }
