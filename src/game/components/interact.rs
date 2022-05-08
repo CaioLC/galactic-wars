@@ -20,9 +20,10 @@ pub struct TurnToDestinationBehaviour {
 }
 
 #[derive(Component)]
-pub struct Destination{
+pub struct Destination {
     pub dest: Option<Vec3>
 }
+
 
 #[derive(Component)]
 pub struct EnRouteBehaviour {

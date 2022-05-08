@@ -1,7 +1,10 @@
+use bevy::math::vec2;
+use bevy::prelude::*;
+
 use crate::camera::MouseWorldPos;
 use crate::game::components::interact::*;
 use crate::math_util::*;
-use bevy::prelude::*;
+use super::super::layers_util::*;
 
 pub fn turn_to_destination(
     time: Res<Time>,
@@ -37,9 +40,20 @@ pub fn turn_to_destination(
 pub fn set_destination(
     ms_input: Res<Input<MouseButton>>,
     mouse_pos: Res<MouseWorldPos>,
-    mut query: Query<&Destination, With<Selected>>
+    mut query: Query<&mut Destination, With<Selected>>
 ) {
     if ms_input.pressed(MouseButton::Right) {
-
+        let ship_dest = vec2_to_vec3(mouse_pos.0, Layers::Ships);
+        for mut destination in query.iter_mut() {
+            match destination.dest {
+                Some(d) => {
+                    if d != ship_dest {
+                        destination.dest = Some(ship_dest)
+                    }
+                },
+                None => destination.dest = Some(ship_dest)
+            };
+        }
+        println!("{}", mouse_pos.0);
     }
 }

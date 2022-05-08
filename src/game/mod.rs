@@ -1,19 +1,19 @@
+mod components;
+mod systems;
+mod layers_util;
+
 use bevy::{
     prelude::*,
     render::{
-        mesh::{Indices, MeshVertexAttribute, PrimitiveTopology, VertexAttributeValues},
-        render_resource::VertexFormat,
+        mesh::{Indices, PrimitiveTopology },
     },
 };
-
-mod components;
-mod systems;
+pub use bevy_text_mesh::prelude::*;
 
 pub use components::board::*;
 pub use components::interact::*;
-pub use bevy_text_mesh::prelude::*;
-
 pub use systems::*;
+
 pub struct BoardPlugin;
 
 impl Plugin for BoardPlugin {
@@ -24,6 +24,7 @@ impl Plugin for BoardPlugin {
             .add_plugin(TextMeshPlugin)
             .add_system(production::produce_fighters)
             .add_system(movement::turn_to_destination)
+            .add_system(movement::set_destination)
             .add_system(production::update_count_mesh);
     }
 }
@@ -83,7 +84,7 @@ fn setup(
         .insert(TurnToDestinationBehaviour {
             rotation_speed: 2.,
         })
-        .insert(Destination { dest: None })
+        .insert(Destination{dest: None})
         .insert(Selected)
 
         .with_children(|parent| {
