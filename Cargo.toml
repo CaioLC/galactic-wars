@@ -6,17 +6,9 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [features]
 default = [ ]
-debug = ["camera_plugin/debug", "bevy-inspector-egui" ]
+debug = [ "bevy-inspector-egui" ]
 
 [dependencies]
 bevy = "0.7"
-bevy_text_mesh = "0.2.0"
-camera_plugin = { path = "camera_plugin" }
-board_plugin = { path = "board_plugin" }
 bevy-inspector-egui = { version = "0.10", optional = true }
-bevy_prototype_lyon = "0.5.0"
-
-[workspace]
-members = [ 
-    "camera_plugin","board_plugin"
- ]
+bevy_text_mesh = "0.2.0"

@@ -1,6 +1,4 @@
-use bevy::gltf::Gltf;
 use bevy::prelude::*;
-use bevy_kira_audio::AudioSource;
 
 pub struct AssetsPlugin;
 impl Plugin for AssetsPlugin {

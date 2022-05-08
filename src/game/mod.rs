@@ -1,15 +1,19 @@
 use bevy::{
-    gltf::Gltf,
     prelude::*,
     render::{
         mesh::{Indices, MeshVertexAttribute, PrimitiveTopology, VertexAttributeValues},
         render_resource::VertexFormat,
     },
 };
+
 mod components;
 mod systems;
 
-pub use components::*;
+pub use components::board::*;
+pub use components::interact::*;
+pub use bevy_text_mesh::prelude::*;
+
+pub use systems::*;
 pub struct BoardPlugin;
 
 impl Plugin for BoardPlugin {
@@ -17,7 +21,10 @@ impl Plugin for BoardPlugin {
         app.insert_resource(FighterTimer(Timer::from_seconds(2.0, true)))
             .insert_resource(TraderTimer(Timer::from_seconds(5.0, true)))
             .add_startup_system(setup)
-            .add_system(systems::production::produce_fighters);
+            .add_plugin(TextMeshPlugin)
+            .add_system(production::produce_fighters)
+            .add_system(movement::turn_to_destination)
+            .add_system(production::update_count_mesh);
     }
 }
 
@@ -27,7 +34,7 @@ fn setup(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    commands.spawn_bundle(generate_planet(
+    commands.spawn_bundle(generate_planet_mesh(
         1.3,
         Color::BISQUE,
         Transform::from_xyz(10., 2., 0.),
@@ -36,56 +43,87 @@ fn setup(
     ));
 
     commands
-        .spawn_bundle(generate_planet(
+        .spawn_bundle(generate_planet_mesh(
             1.45,
             Color::hex("ffd891").unwrap(),
             Transform::default(),
             &mut meshes,
             &mut materials,
         ))
-        .insert(Planet::default());
+        .insert(Planet::default())
         // ADD TEXT3D OVERLAY WITH BEVY_TEXT_MESH: https://crates.io/crates/bevy_text_mesh
-        // .with_children(|parent| {
-            // parent.spawn_bundle(Text2dBundle {
-                // text: Text::with_section(
-                    // "0".to_string(),
-                    // TextStyle {
-                        // font: asset_server.load("fonts/ShareTechMono.ttf"),
-                        // font_size: 25.,
-                        // color: Color::BLACK,
-                    // },
-                    // TextAlignment {
-                        // vertical: VerticalAlign::Center,
-                        // horizontal: HorizontalAlign::Center,
-                    // },
-                // ),
-                // transform: Transform::from_translation(Vec3::new(0., 0., 1.)),
-                // ..Default::default()
-            // });
-        // });
+        .with_children(|parent| {
+            parent
+            .spawn_bundle(TextMeshBundle {
+                text_mesh: TextMesh {
+                    text: String::from("0"),
+                    style: TextMeshStyle {
+                        font: asset_server.load("fonts/ShareTechMono.ttf"),
+                        font_size: SizeUnit::NonStandard(56.),
+                        color: Color::rgb(0.1, 0.2, 0.1),
+                        mesh_quality: Quality::Custom(128),
+                        ..Default::default()
+                    },
+                    ..Default::default()
+                },
+                transform: Transform::from_xyz(-0.2, -0.5, 2.),
+                ..Default::default()
+            });
+        });
 
     commands
-        .spawn_bundle(generate_ship(
+        .spawn_bundle(generate_ship_mesh(
             ShipType::Fighter,
             Transform::from_xyz(2., 2., 0.),
             &mut meshes,
             &mut materials,
         ))
-        .insert(Ship { movement_speed: 2. });
 
-    commands
-        .spawn_bundle(generate_ship(
-            ShipType::Trade,
-            Transform::from_xyz(-2., -2., 0.),
-            &mut meshes,
-            &mut materials,
-        ))
-        .insert(Ship { movement_speed: 2. });
-    // .spawn_bundle(generate_ship(ship_handle, &mut meshes, &mut materials))
-    // .insert(Ship { movement_speed: 1., life: 2 });
+        .insert(Movement{speed: 3.})
+        .insert(TurnToDestinationBehaviour {
+            rotation_speed: 2.,
+        })
+        .insert(Destination { dest: None })
+        .insert(Selected)
+
+        .with_children(|parent| {
+            parent
+            .spawn_bundle(TextMeshBundle {
+                text_mesh: TextMesh {
+                    text: String::from("0"),
+                    style: TextMeshStyle {
+                        font: asset_server.load("fonts/ShareTechMono.ttf"),
+                        font_size: SizeUnit::NonStandard(56.),
+                        color: Color::rgb(0.1, 0.2, 0.1),
+                        mesh_quality: Quality::Custom(128),
+                        ..Default::default()
+                    },
+                    ..Default::default()
+                },
+                transform: Transform::from_xyz(-0.2, -0.5, 2.),
+                ..Default::default()
+            });
+        });
+    // commands
+        // .spawn_bundle(generate_ship_mesh(
+            // ShipType::Trade,
+            // Transform::from_xyz(-2., -2., 0.),
+            // &mut meshes,
+            // &mut materials,
+        // ))
+        // .insert(Movement(2.))
+        // .insert(TurnToDestinationBehaviour {
+            // destination: None,
+            // rotation_speed: 1.,
+        // })
+        // .insert(Selected);
 }
 
-fn generate_planet(
+// TODO!:
+fn generate_planet() {
+    todo!();
+}
+fn generate_planet_mesh(
     radius: f32,
     color: Color,
     transform: Transform,
@@ -108,7 +146,7 @@ fn generate_planet(
     }
 }
 
-fn generate_ship(
+fn generate_ship_mesh(
     ship_type: ShipType,
     transform: Transform,
     meshes: &mut ResMut<Assets<Mesh>>,

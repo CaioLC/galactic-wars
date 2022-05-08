@@ -1,10 +1,35 @@
 use bevy::prelude::*;
 
 #[derive(Component)]
-pub struct Ship {
-    pub movement_speed: f32,
+pub struct Selected;
+
+#[derive(Component)]
+pub struct Movement{
+    pub speed: f32,
 }
 
+#[derive(Component)]
+pub struct AttackBehaviour {
+    pub accuracy: f32,
+    pub range: f32,
+}
+
+#[derive(Component)]
+pub struct TurnToDestinationBehaviour {
+    pub rotation_speed: f32,
+}
+
+#[derive(Component)]
+pub struct Destination{
+    pub dest: Option<Vec3>
+}
+
+#[derive(Component)]
+pub struct EnRouteBehaviour {
+    pub point_a: Vec3,
+    pub point_b: Vec3,
+    pub en_route_to: Vec3,
+}
 pub enum ShipType {
     Trade,
     Fighter,
