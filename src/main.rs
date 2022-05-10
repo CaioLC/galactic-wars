@@ -1,10 +1,10 @@
-mod game;
-mod camera;
-mod math_util;
+pub mod game;
+pub mod camera;
+pub mod math_util;
 
 use bevy::{diagnostic::FrameTimeDiagnosticsPlugin, prelude::*};
 #[cfg(feature = "debug")]
-use bevy_inspector_egui::WorldInspectorPlugin;
+use bevy_inspector_egui::{WorldInspectorPlugin, InspectorPlugin, RegisterInspectable};
 
 pub use game::BoardPlugin;
 pub use camera::CameraPlugin;
@@ -25,7 +25,11 @@ fn main() {
     //.add_startup_system(UI_setup)
 
     #[cfg(feature = "debug")]
-    app.add_plugin(WorldInspectorPlugin::new());
+    app.add_plugin(WorldInspectorPlugin::new())
+        // .add_plugin(InspectorPlugin::<game::components::interact::Destination>::new());
+        .register_inspectable::<game::components::interact::EnRouteBehaviour>()
+        .register_inspectable::<game::components::interact::Movement>()
+        .register_inspectable::<game::components::interact::Planet>();
 
     app.run();
 }

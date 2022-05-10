@@ -9,6 +9,14 @@ pub fn get_heading_to_point(delta: Vec3) -> f32 {
     delta.y.atan2(delta.x)
 }
 
+pub fn world_to_local(point: Vec3, local_space: Transform) -> Vec3 {
+    let first = point - local_space.translation;
+    let x_component = first.dot(local_space.right());
+    let y_component = first.dot(local_space.up());
+    let z_component = first.dot(local_space.forward());
+    Vec3::new(x_component, y_component, z_component)
+}
+
 /// Returns the smallest angle difference between two stated angles.
 /// 
 /// # Arguments

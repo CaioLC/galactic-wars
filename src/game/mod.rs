@@ -1,4 +1,4 @@
-mod components;
+pub mod components;
 mod systems;
 mod layers_util;
 
@@ -14,16 +14,21 @@ pub use components::board::*;
 pub use components::interact::*;
 pub use systems::*;
 
+use self::layers_util::Layers;
+
 pub struct BoardPlugin;
 
 impl Plugin for BoardPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(FighterTimer(Timer::from_seconds(2.0, true)))
+        app
+            .add_plugin(ConfigPlugin)
+            .insert_resource(FighterTimer(Timer::from_seconds(2.0, true)))
             .insert_resource(TraderTimer(Timer::from_seconds(5.0, true)))
             .add_startup_system(setup)
             .add_plugin(TextMeshPlugin)
             .add_system(production::produce_fighters)
             .add_system(movement::turn_to_destination)
+            .add_system(movement::move_to_destination)
             .add_system(movement::set_destination)
             .add_system(production::update_count_mesh);
     }
@@ -31,46 +36,52 @@ impl Plugin for BoardPlugin {
 
 fn setup(
     asset_server: Res<AssetServer>,
+    board_params: Res<BoardParams>,
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    commands.spawn_bundle(generate_planet_mesh(
-        1.3,
-        Color::BISQUE,
-        Transform::from_xyz(10., 2., 0.),
-        &mut meshes,
-        &mut materials,
-    ));
-
-    commands
-        .spawn_bundle(generate_planet_mesh(
-            1.45,
-            Color::hex("ffd891").unwrap(),
-            Transform::default(),
+    for i in 0..board_params.no_of_planets {
+        let transf = Transform::from_xyz(i as f32, i as f32, layers_util::get_z(Layers::Planets));
+        spawn_planet(
+            &mut commands,
             &mut meshes,
             &mut materials,
-        ))
-        .insert(Planet::default())
-        // ADD TEXT3D OVERLAY WITH BEVY_TEXT_MESH: https://crates.io/crates/bevy_text_mesh
-        .with_children(|parent| {
-            parent
-            .spawn_bundle(TextMeshBundle {
-                text_mesh: TextMesh {
-                    text: String::from("0"),
-                    style: TextMeshStyle {
-                        font: asset_server.load("fonts/ShareTechMono.ttf"),
-                        font_size: SizeUnit::NonStandard(56.),
-                        color: Color::rgb(0.1, 0.2, 0.1),
-                        mesh_quality: Quality::Custom(128),
-                        ..Default::default()
-                    },
-                    ..Default::default()
-                },
-                transform: Transform::from_xyz(-0.2, -0.5, 2.),
-                ..Default::default()
-            });
-        });
+            1.5,
+            transf,
+            Color::GREEN,
+            asset_server.load("fonts/ShareTechMono.ttf")
+        );
+    }
+
+    // commands
+        // .spawn_bundle(generate_planet_mesh(
+            // 1.45,
+            // Color::hex("ffd891").unwrap(),
+            // Transform::default(),
+            // &mut meshes,
+            // &mut materials,
+        // ))
+        // .insert(Planet::default())
+        // // ADD TEXT3D OVERLAY WITH BEVY_TEXT_MESH: https://crates.io/crates/bevy_text_mesh
+        // .with_children(|parent| {
+            // parent
+            // .spawn_bundle(TextMeshBundle {
+                // text_mesh: TextMesh {
+                    // text: String::from("0"),
+                    // style: TextMeshStyle {
+                        // font: asset_server.load("fonts/ShareTechMono.ttf"),
+                        // font_size: SizeUnit::NonStandard(56.),
+                        // color: Color::rgb(0.1, 0.2, 0.1),
+                        // mesh_quality: Quality::Custom(128),
+                        // ..Default::default()
+                    // },
+                    // ..Default::default()
+                // },
+                // transform: Transform::from_xyz(-0.2, -0.5, 2.),
+                // ..Default::default()
+            // });
+        // });
 
     commands
         .spawn_bundle(generate_ship_mesh(
@@ -80,50 +91,63 @@ fn setup(
             &mut materials,
         ))
 
-        .insert(Movement{speed: 3.})
-        .insert(TurnToDestinationBehaviour {
-            rotation_speed: 2.,
-        })
+        .insert(Movement{speed: 6.})
         .insert(Destination{dest: None})
-        .insert(Selected)
+        .insert(Selected);
 
-        .with_children(|parent| {
-            parent
-            .spawn_bundle(TextMeshBundle {
-                text_mesh: TextMesh {
-                    text: String::from("0"),
-                    style: TextMeshStyle {
-                        font: asset_server.load("fonts/ShareTechMono.ttf"),
-                        font_size: SizeUnit::NonStandard(56.),
-                        color: Color::rgb(0.1, 0.2, 0.1),
-                        mesh_quality: Quality::Custom(128),
-                        ..Default::default()
-                    },
-                    ..Default::default()
-                },
-                transform: Transform::from_xyz(-0.2, -0.5, 2.),
-                ..Default::default()
-            });
-        });
     // commands
         // .spawn_bundle(generate_ship_mesh(
-            // ShipType::Trade,
-            // Transform::from_xyz(-2., -2., 0.),
+            // ShipType::Fighter,
+            // Transform::from_xyz(3., -1., 0.),
             // &mut meshes,
             // &mut materials,
         // ))
-        // .insert(Movement(2.))
-        // .insert(TurnToDestinationBehaviour {
-            // destination: None,
-            // rotation_speed: 1.,
-        // })
+
+        // .insert(Movement{speed: 8.})
+        // .insert(Destination{dest: None})
         // .insert(Selected);
 }
 
 // TODO!:
-fn generate_planet() {
-    todo!();
+fn spawn_planet(
+    commands: &mut Commands,
+    meshes: &mut ResMut<Assets<Mesh>>,
+    materials: &mut ResMut<Assets<StandardMaterial>>,
+    radius: f32,
+    transform: Transform,
+    color: Color,
+    font: Handle<TextMeshFont>,
+) {
+    commands
+        .spawn_bundle(generate_planet_mesh(
+            radius,
+            color,
+            transform,
+            meshes,
+            materials,
+        ))
+    .insert(Planet::default())
+    // ADD TEXT3D OVERLAY WITH BEVY_TEXT_MESH: https://crates.io/crates/bevy_text_mesh
+    .with_children(|parent| {
+        parent
+        .spawn_bundle(TextMeshBundle {
+            text_mesh: TextMesh {
+                text: String::from("0"),
+                style: TextMeshStyle {
+                    font,
+                    font_size: SizeUnit::NonStandard(56.),
+                    color: Color::rgb(0.1, 0.2, 0.1),
+                    mesh_quality: Quality::Custom(128),
+                    ..Default::default()
+                },
+                ..Default::default()
+            },
+            transform: Transform::from_xyz(-0.2, -0.5, 2.),
+            ..Default::default()
+        });
+    });
 }
+
 fn generate_planet_mesh(
     radius: f32,
     color: Color,
@@ -173,10 +197,10 @@ fn generate_ship_mesh(
 fn ship_fighter_mesh() -> Mesh {
     // points are (vec3[position], vec2[uvs])
     let points = vec![
-        ([0.0, 2.0, 0.0], [1.0, 1.0]),
-        ([-1.0, 0.0, 0.0], [0., 0.]),
-        ([0.0, 0.5, 0.0], [0.5, 0.5]),
-        ([1.0, 0.0, 0.0], [0., 0.]),
+        ([0.0, 1.0, 0.0], [1.0, 1.0]),
+        ([-1.0, -1.0, 0.0], [0., 0.]),
+        ([0.0, -0.5, 0.0], [0.5, 0.5]),
+        ([1.0, -1.0, 0.0], [0., 0.]),
     ];
     let mut vertices = Vec::with_capacity(points.len());
     let mut uvs = Vec::with_capacity(points.len());

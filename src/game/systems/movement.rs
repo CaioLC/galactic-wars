@@ -1,39 +1,50 @@
-use bevy::math::vec2;
 use bevy::prelude::*;
 
 use crate::camera::MouseWorldPos;
 use crate::game::components::interact::*;
-use crate::math_util::*;
+use crate::math_util;
 use super::super::layers_util::*;
 
+fn to_local_space(local_up: Vec3, point: Vec3) {
+
+
+}
 pub fn turn_to_destination(
     time: Res<Time>,
-    keyboard_input: Res<Input<KeyCode>>,
     mut query: Query<(
-        &mut TurnToDestinationBehaviour,
         &mut Transform,
         &Destination,
     ),
         With<Selected>>
 ) {
-    for (mut behaviour, mut transform, destination) in query.iter_mut() {
-        let mut rotation_factor = 0.0;
-        if keyboard_input.pressed(KeyCode::Left) {
-            rotation_factor += 1.0;
-        }
-    
-        if keyboard_input.pressed(KeyCode::Right) {
-            rotation_factor -= 1.0;
-        }
+    for (mut transform, destination) in query.iter_mut() {
         if let Some(d) = destination.dest {
-            let delta = d - transform.translation;
-            let desired_heading = get_heading_to_point(delta);
+            let delta = (d - transform.translation).normalize();
+            let target_angle = math_util::get_heading_to_point(delta);
+            let cur_angle = math_util::get_heading_to_point(transform.up());
+            let angle_diff = math_util::get_angle_difference(target_angle, cur_angle);
+            if angle_diff.abs() > 0.005 {
+                transform.rotation *= Quat::from_rotation_z(angle_diff * time.delta_seconds() * 3.0);
+            }
         };
-        // let (_, _, heading_z) = transform.rotation.to_euler(EulerRot::XYZ);
+    }
+}
 
-        let rotation_delta = Quat::from_rotation_z(rotation_factor * behaviour.rotation_speed * time.delta_seconds());
-        transform.rotation *= rotation_delta;
-
+pub fn move_to_destination( 
+    time: Res<Time>,
+    mut query: Query<(&mut Destination, &mut Transform, &Movement)>
+) {
+    for (mut dest, mut transf, mov) in query.iter_mut() {
+        if let Some(d) = dest.dest {
+            let dist = transf.translation.distance(d);
+            if dist < 0.1 {
+                dest.dest = None;
+            }
+            else {
+                let vec_target = (d - transf.translation).normalize();
+                transf.translation += vec_target * time.delta_seconds() * mov.speed;
+            }
+        }
     }
 }
 
@@ -54,6 +65,5 @@ pub fn set_destination(
                 None => destination.dest = Some(ship_dest)
             };
         }
-        println!("{}", mouse_pos.0);
     }
 }
