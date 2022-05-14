@@ -1,14 +1,11 @@
 use bevy::prelude::*;
 
 use crate::camera::MouseWorldPos;
-use crate::game::components::interact::*;
+use crate::game::components::characteristics::*;
+use crate::game::components::selection::*;
 use crate::math_util;
 use super::super::layers_util::*;
 
-fn to_local_space(local_up: Vec3, point: Vec3) {
-
-
-}
 pub fn turn_to_destination(
     time: Res<Time>,
     mut query: Query<(

@@ -1,4 +1,4 @@
-use crate::game::components::interact::*;
+use crate::game::components::characteristics::*;
 use bevy::prelude::*;
 use bevy_text_mesh::prelude::*;
 

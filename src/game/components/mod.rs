@@ -1,2 +1,3 @@
-pub mod board;
-pub mod interact;
+pub mod config;
+pub mod characteristics;
+pub mod selection;

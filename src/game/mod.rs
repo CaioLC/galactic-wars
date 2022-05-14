@@ -1,6 +1,6 @@
-pub mod components;
 mod systems;
-mod layers_util;
+pub mod components;
+pub mod layers_util;
 
 use bevy::{
     prelude::*,
@@ -10,8 +10,11 @@ use bevy::{
 };
 pub use bevy_text_mesh::prelude::*;
 
-pub use components::board::*;
-pub use components::interact::*;
+pub use components::{
+    config::*,
+    characteristics::*,
+    selection::*,
+};
 pub use systems::*;
 
 use self::layers_util::Layers;
@@ -24,13 +27,16 @@ impl Plugin for BoardPlugin {
             .add_plugin(ConfigPlugin)
             .insert_resource(FighterTimer(Timer::from_seconds(2.0, true)))
             .insert_resource(TraderTimer(Timer::from_seconds(5.0, true)))
+            .add_event::<components::selection::SelectNearest>()
             .add_startup_system(setup)
             .add_plugin(TextMeshPlugin)
             .add_system(production::produce_fighters)
             .add_system(movement::turn_to_destination)
             .add_system(movement::move_to_destination)
             .add_system(movement::set_destination)
-            .add_system(production::update_count_mesh);
+            .add_system(production::update_count_mesh)
+            .add_system(selection::click_select)
+            .add_system(selection::update_selected);
     }
 }
 
@@ -93,6 +99,7 @@ fn setup(
 
         .insert(Movement{speed: 6.})
         .insert(Destination{dest: None})
+        .insert(Selectable)
         .insert(Selected);
 
     // commands
@@ -127,6 +134,7 @@ fn spawn_planet(
             materials,
         ))
     .insert(Planet::default())
+    .insert(Selectable)
     // ADD TEXT3D OVERLAY WITH BEVY_TEXT_MESH: https://crates.io/crates/bevy_text_mesh
     .with_children(|parent| {
         parent

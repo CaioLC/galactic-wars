@@ -83,3 +83,7 @@ fn cursor_to_world(
 
     cursor_pos_far.truncate()
 }
+
+pub fn draw_ray(
+) {
+}
