@@ -8,6 +8,13 @@ pub struct Selected;
 #[derive(Component)]
 pub struct Selectable;
 
+pub struct IsSelecting {
+    pub is_selecting: bool,
+    pub mouse_enter: Option<Vec2>
+}
+
+#[derive(Component)]
+pub struct SelectionBox;
 
 pub struct SelectNearest(pub Entity);
 

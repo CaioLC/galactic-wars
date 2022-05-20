@@ -27,7 +27,11 @@ impl Plugin for BoardPlugin {
             .add_plugin(ConfigPlugin)
             .insert_resource(FighterTimer(Timer::from_seconds(2.0, true)))
             .insert_resource(TraderTimer(Timer::from_seconds(5.0, true)))
+            // TODO: Create SelectionPlugin
+            .insert_resource(IsSelecting { is_selecting: false, mouse_enter: None })
             .add_event::<components::selection::SelectNearest>()
+            .add_event::<components::selection::SelectMany>()
+            // 
             .add_startup_system(setup)
             .add_plugin(TextMeshPlugin)
             .add_system(production::produce_fighters)
@@ -36,7 +40,9 @@ impl Plugin for BoardPlugin {
             .add_system(movement::set_destination)
             .add_system(production::update_count_mesh)
             .add_system(selection::click_select)
-            .add_system(selection::update_selected);
+            .add_system(selection::update_selected)
+            .add_system(selection::box_select)
+            .add_system(selection::draw_box_select);
     }
 }
 
@@ -115,7 +121,7 @@ fn setup(
         // .insert(Selected);
 }
 
-// TODO!:
+// TODO:
 fn spawn_planet(
     commands: &mut Commands,
     meshes: &mut ResMut<Assets<Mesh>>,
@@ -179,7 +185,7 @@ fn generate_planet_mesh(
     }
 }
 
-fn generate_ship_mesh(
+pub fn generate_ship_mesh(
     ship_type: ShipType,
     transform: Transform,
     meshes: &mut ResMut<Assets<Mesh>>,
