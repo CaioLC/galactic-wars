@@ -16,6 +16,7 @@ pub struct IsSelecting {
 #[derive(Component)]
 pub struct SelectionBox;
 
-pub struct SelectNearest(pub Entity);
-
-pub struct SelectMany(pub Vec<Entity>);
+pub struct SelectMany {
+    pub bottom_left: Vec2,
+    pub top_right: Vec2,
+}

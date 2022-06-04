@@ -6,40 +6,44 @@ use crate::camera::MouseWorldPos;
 use crate::game::components::selection::*;
 use crate::game::layers_util;
 
-pub fn click_select(
-    ms_input: Res<Input<MouseButton>>,
-    ms_pos: Res<MouseWorldPos>,
-    query: Query<(Entity, &Transform), With<Selectable>>,
-    mut ev_select_nearest: EventWriter<SelectNearest>,
-) {
-    if ms_input.just_pressed(MouseButton::Left) {
-        let mut min_dist: f32 = 10.0;
-        let mut min_entity: Option<Entity> = None;
-        for (e, transform) in query.iter() {
-            let mouse_pos_3d = layers_util::vec2_to_vec3(ms_pos.0, layers_util::Layers::Planets);
-            let obj_dist = mouse_pos_3d.distance_squared(transform.translation);
-            if obj_dist <= min_dist {
-                min_dist = obj_dist;
-                min_entity = Some(e);
-            }
-        }
-        if let Some(entity) = min_entity {
-            ev_select_nearest.send(SelectNearest(entity));
-        }
-    }
-}
+// TODO: selection hotkeys: to select all ships / all planets / all ships of specific type
 
-pub fn update_selected(
+pub fn update_box(
     mut commands: Commands,
-    mut ev_select_nearest: EventReader<SelectNearest>,
-    query: Query<Entity, With<Selected>>,
+    mut ev_select_box: EventReader<SelectMany>,
+    query_selected: Query<Entity, With<Selected>>,
+    query: Query<(Entity, &Transform), With<Selectable>>,
 ) {
-    for ev in ev_select_nearest.iter() {
-        for s_entity in query.iter() {
+    for ev in ev_select_box.iter() {
+        for s_entity in query_selected.iter() {
             commands.entity(s_entity).remove::<Selected>();
         }
-        commands.entity(ev.0).insert(Selected);
-        println!("Entity {:?} is now selected", ev.0);
+        if ev.bottom_left.distance(ev.top_right) < 1. {
+            let mut min_entity = None;
+            let mut min_dist: f32 = 10.0;
+            for (e, transf) in query.iter() {
+                let mouse_pos_3d = layers_util::vec2_to_vec3(ev.bottom_left, layers_util::Layers::Planets);
+                    let obj_dist = mouse_pos_3d.distance_squared(transf.translation);
+                    if obj_dist <= min_dist {
+                        min_dist = obj_dist;
+                        min_entity = Some(e);
+                    }
+                }
+                if let Some(e) = min_entity {
+                    commands.entity(e).insert(Selected);
+                }
+            }
+        else {
+            // TODO: split selection between ships and planets.
+            for (e, transf) in query.iter() {
+                if transf.translation.x >= ev.bottom_left.x
+                && transf.translation.x <= ev.top_right.x
+                && transf.translation.y >= ev.bottom_left.y
+                && transf.translation.y <= ev.top_right.y {
+                    commands.entity(e).insert(Selected);
+                }
+            }
+        }
     }
 }
 
@@ -48,19 +52,27 @@ pub fn box_select(
     ms_input: Res<Input<MouseButton>>,
     ms_pos: Res<MouseWorldPos>,
     selection_box: Query<Entity, With<SelectionBox>>,
-    mut is_selecting_res: ResMut<IsSelecting>
+    mut is_selecting_res: ResMut<IsSelecting>,
+    mut ev_select_writer: EventWriter<SelectMany>,
 ) {
     if ms_input.just_pressed(MouseButton::Left){
         is_selecting_res.is_selecting = true;
         is_selecting_res.mouse_enter = Some(ms_pos.0);
     }
     if ms_input.just_released(MouseButton::Left) {
-        is_selecting_res.is_selecting = false;
-        is_selecting_res.mouse_enter = None;
         match selection_box.get_single() {
-            Ok(e) =>commands.entity(e).despawn(),
+            Ok(e) => {
+                commands.entity(e).despawn();
+                if let Some(mouse_enter) = is_selecting_res.mouse_enter {
+                    let bottom_left = Vec2::new(mouse_enter.x.min(ms_pos.0.x), mouse_enter.y.min(ms_pos.0.y));
+                    let top_right = Vec2::new(mouse_enter.x.max(ms_pos.0.x), mouse_enter.y.max(ms_pos.0.y));
+                    ev_select_writer.send(SelectMany{ bottom_left, top_right });
+                }
+            },
             Err(_) => {}
         }
+        is_selecting_res.is_selecting = false;
+        is_selecting_res.mouse_enter = None;
     }
 }
 
@@ -141,4 +153,3 @@ pub fn box_select_mesh(screen_pos_origin: Vec2, screen_pos_target: Vec2) -> Mesh
     mesh.set_indices(Some(Indices::U32(vec![0, 1, 2, 1, 3, 2])));
     mesh
 }
-

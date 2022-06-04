@@ -29,7 +29,6 @@ impl Plugin for BoardPlugin {
             .insert_resource(TraderTimer(Timer::from_seconds(5.0, true)))
             // TODO: Create SelectionPlugin
             .insert_resource(IsSelecting { is_selecting: false, mouse_enter: None })
-            .add_event::<components::selection::SelectNearest>()
             .add_event::<components::selection::SelectMany>()
             // 
             .add_startup_system(setup)
@@ -39,9 +38,8 @@ impl Plugin for BoardPlugin {
             .add_system(movement::move_to_destination)
             .add_system(movement::set_destination)
             .add_system(production::update_count_mesh)
-            .add_system(selection::click_select)
-            .add_system(selection::update_selected)
             .add_system(selection::box_select)
+            .add_system(selection::update_box)
             .add_system(selection::draw_box_select);
     }
 }
