@@ -1,13 +1,13 @@
-pub mod game;
 pub mod camera;
+pub mod game;
 pub mod math_util;
 
 use bevy::{diagnostic::FrameTimeDiagnosticsPlugin, prelude::*};
 #[cfg(feature = "debug")]
-use bevy_inspector_egui::{WorldInspectorPlugin, InspectorPlugin, RegisterInspectable};
+use bevy_inspector_egui::{InspectorPlugin, RegisterInspectable, WorldInspectorPlugin};
 
-pub use game::BoardPlugin;
 pub use camera::CameraPlugin;
+pub use game::BoardPlugin;
 
 fn main() {
     let mut app = App::new();

@@ -1,20 +1,14 @@
-mod systems;
 pub mod components;
 pub mod layers_util;
+mod systems;
 
 use bevy::{
     prelude::*,
-    render::{
-        mesh::{Indices, PrimitiveTopology },
-    },
+    render::mesh::{Indices, PrimitiveTopology},
 };
 pub use bevy_text_mesh::prelude::*;
 
-pub use components::{
-    config::*,
-    characteristics::*,
-    selection::*,
-};
+pub use components::{characteristics::*, config::*, selection::*};
 pub use systems::*;
 
 use self::layers_util::Layers;
@@ -23,17 +17,20 @@ pub struct BoardPlugin;
 
 impl Plugin for BoardPlugin {
     fn build(&self, app: &mut App) {
-        app
-            .add_plugin(ConfigPlugin)
+        app.add_plugin(ConfigPlugin)
             .insert_resource(FighterTimer(Timer::from_seconds(2.0, true)))
             .insert_resource(TraderTimer(Timer::from_seconds(5.0, true)))
             // TODO: Create SelectionPlugin
-            .insert_resource(IsSelecting { is_selecting: false, mouse_enter: None })
+            .insert_resource(IsSelecting {
+                is_selecting: false,
+                mouse_enter: None,
+            })
             .add_event::<components::selection::SelectMany>()
-            // 
+            //
             .add_startup_system(setup)
             .add_plugin(TextMeshPlugin)
             .add_system(production::produce_fighters)
+            .add_system(production::deploy_fighters)
             .add_system(movement::turn_to_destination)
             .add_system(movement::move_to_destination)
             .add_system(movement::set_destination)
@@ -60,63 +57,33 @@ fn setup(
             1.5,
             transf,
             Color::GREEN,
-            asset_server.load("fonts/ShareTechMono.ttf")
+            asset_server.load("fonts/ShareTechMono.ttf"),
         );
     }
-
-    // commands
-        // .spawn_bundle(generate_planet_mesh(
-            // 1.45,
-            // Color::hex("ffd891").unwrap(),
-            // Transform::default(),
-            // &mut meshes,
-            // &mut materials,
-        // ))
-        // .insert(Planet::default())
-        // // ADD TEXT3D OVERLAY WITH BEVY_TEXT_MESH: https://crates.io/crates/bevy_text_mesh
-        // .with_children(|parent| {
-            // parent
-            // .spawn_bundle(TextMeshBundle {
-                // text_mesh: TextMesh {
-                    // text: String::from("0"),
-                    // style: TextMeshStyle {
-                        // font: asset_server.load("fonts/ShareTechMono.ttf"),
-                        // font_size: SizeUnit::NonStandard(56.),
-                        // color: Color::rgb(0.1, 0.2, 0.1),
-                        // mesh_quality: Quality::Custom(128),
-                        // ..Default::default()
-                    // },
-                    // ..Default::default()
-                // },
-                // transform: Transform::from_xyz(-0.2, -0.5, 2.),
-                // ..Default::default()
-            // });
-        // });
-
-    commands
-        .spawn_bundle(generate_ship_mesh(
-            ShipType::Fighter,
-            Transform::from_xyz(2., 2., 0.),
-            &mut meshes,
-            &mut materials,
-        ))
-
-        .insert(Movement{speed: 6.})
-        .insert(Destination{dest: None})
-        .insert(Selectable)
-        .insert(Selected);
-
-    // commands
-        // .spawn_bundle(generate_ship_mesh(
-            // ShipType::Fighter,
-            // Transform::from_xyz(3., -1., 0.),
-            // &mut meshes,
-            // &mut materials,
-        // ))
-
-        // .insert(Movement{speed: 8.})
-        // .insert(Destination{dest: None})
-        // .insert(Selected);
+    spawn_ship(
+        &mut commands,
+        &mut meshes,
+        &mut materials,
+        ShipType::Fighter,
+        Transform::from_xyz(2., 2., layers_util::get_z(Layers::Ships)),
+        None
+    );
+    spawn_ship(
+        &mut commands,
+        &mut meshes,
+        &mut materials,
+        ShipType::Fighter,
+        Transform::from_xyz(3., 3., layers_util::get_z(Layers::Ships)),
+        None
+    );
+    spawn_ship(
+        &mut commands,
+        &mut meshes,
+        &mut materials,
+        ShipType::Trade,
+        Transform::from_xyz(-2., 2., layers_util::get_z(Layers::Ships)),
+        None
+    );
 }
 
 // TODO:
@@ -131,33 +98,28 @@ fn spawn_planet(
 ) {
     commands
         .spawn_bundle(generate_planet_mesh(
-            radius,
-            color,
-            transform,
-            meshes,
-            materials,
+            radius, color, transform, meshes, materials,
         ))
-    .insert(Planet::default())
-    .insert(Selectable)
-    // ADD TEXT3D OVERLAY WITH BEVY_TEXT_MESH: https://crates.io/crates/bevy_text_mesh
-    .with_children(|parent| {
-        parent
-        .spawn_bundle(TextMeshBundle {
-            text_mesh: TextMesh {
-                text: String::from("0"),
-                style: TextMeshStyle {
-                    font,
-                    font_size: SizeUnit::NonStandard(56.),
-                    color: Color::rgb(0.1, 0.2, 0.1),
-                    mesh_quality: Quality::Custom(128),
+        .insert(Planet::default())
+        .insert(Selectable)
+        // ADD TEXT3D OVERLAY WITH BEVY_TEXT_MESH: https://crates.io/crates/bevy_text_mesh
+        .with_children(|parent| {
+            parent.spawn_bundle(TextMeshBundle {
+                text_mesh: TextMesh {
+                    text: String::from("0"),
+                    style: TextMeshStyle {
+                        font,
+                        font_size: SizeUnit::NonStandard(56.),
+                        color: Color::rgb(0.1, 0.2, 0.1),
+                        mesh_quality: Quality::Custom(128),
+                        ..Default::default()
+                    },
                     ..Default::default()
                 },
+                transform: Transform::from_xyz(-0.2, -0.5, 2.),
                 ..Default::default()
-            },
-            transform: Transform::from_xyz(-0.2, -0.5, 2.),
-            ..Default::default()
+            });
         });
-    });
 }
 
 fn generate_planet_mesh(
@@ -180,6 +142,32 @@ fn generate_planet_mesh(
             ..default()
         }),
         ..default()
+    }
+}
+
+pub fn spawn_ship(
+    commands: &mut Commands,
+    meshes: &mut ResMut<Assets<Mesh>>,
+    materials: &mut ResMut<Assets<StandardMaterial>>,
+    ship_type: ShipType,
+    transform: Transform,
+    set_destination: Option<Vec3>,
+) {
+    match ship_type {
+        ShipType::Fighter => {
+            commands
+                .spawn_bundle(generate_ship_mesh(ship_type, transform, meshes, materials))
+                .insert(Movement { speed: 6. })
+                .insert(Destination { dest: set_destination })
+                .insert(Selectable);
+        }
+        ShipType::Trade => {
+            commands
+                .spawn_bundle(generate_ship_mesh(ship_type, transform, meshes, materials))
+                .insert(Movement { speed: 3. })
+                .insert(Destination { dest: set_destination })
+                .insert(Selectable);
+        }
     }
 }
 

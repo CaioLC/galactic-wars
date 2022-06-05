@@ -1,6 +1,6 @@
 pub use bevy::{
     input::mouse::{MouseMotion, MouseWheel},
-    prelude::*
+    prelude::*,
 };
 
 pub use super::components::*;
@@ -84,6 +84,4 @@ fn cursor_to_world(
     cursor_pos_far.truncate()
 }
 
-pub fn draw_ray(
-) {
-}
+pub fn draw_ray() {}

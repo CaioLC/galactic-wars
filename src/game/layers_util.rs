@@ -1,6 +1,5 @@
 use bevy::math::{Vec2, Vec3};
 
-
 pub enum Layers {
     Ships,
     Planets,

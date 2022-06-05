@@ -5,7 +5,6 @@ pub use bevy::prelude::*;
 pub use components::*;
 pub use systems::*;
 
-
 pub struct CameraPlugin;
 
 impl Plugin for CameraPlugin {

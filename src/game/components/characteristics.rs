@@ -1,16 +1,15 @@
 use bevy::prelude::*;
 #[cfg_attr(feature = "debug", derive(bevy_inspector_egui::Inspectable))]
 #[derive(Component)]
-pub struct Movement{
+pub struct Movement {
     pub speed: f32,
 }
 
 #[cfg_attr(feature = "debug", derive(bevy_inspector_egui::Inspectable))]
 #[derive(Component)]
 pub struct Destination {
-    pub dest: Option<Vec3>
+    pub dest: Option<Vec3>,
 }
-
 
 #[cfg_attr(feature = "debug", derive(bevy_inspector_egui::Inspectable))]
 #[derive(Component)]
