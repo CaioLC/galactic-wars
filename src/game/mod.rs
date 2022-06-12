@@ -6,6 +6,7 @@ use bevy::{
     prelude::*,
     render::mesh::{Indices, PrimitiveTopology},
 };
+use bevy_rapier3d::prelude::*;
 pub use bevy_text_mesh::prelude::*;
 
 pub use components::{characteristics::*, config::*, selection::*};
@@ -13,9 +14,9 @@ pub use systems::*;
 
 use self::layers_util::Layers;
 
-pub struct BoardPlugin;
+pub struct GamePlugin;
 
-impl Plugin for BoardPlugin {
+impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(ConfigPlugin)
             .insert_resource(FighterTimer(Timer::from_seconds(2.0, true)))
@@ -26,7 +27,8 @@ impl Plugin for BoardPlugin {
                 mouse_enter: None,
             })
             .add_event::<components::selection::SelectMany>()
-            //
+            .add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
+            // .insert_resource(RapierConfiguration { gravity: Vec3::ZERO, ..Default::default() })
             .add_startup_system(setup)
             .add_plugin(TextMeshPlugin)
             .add_system(production::produce_fighters)
@@ -38,6 +40,9 @@ impl Plugin for BoardPlugin {
             .add_system(selection::box_select)
             .add_system(selection::update_box)
             .add_system(selection::draw_box_select);
+        
+        #[cfg(feature = "debug")]
+        app.add_plugin(RapierDebugRenderPlugin::default());
     }
 }
 
@@ -100,6 +105,9 @@ fn spawn_planet(
         .spawn_bundle(generate_planet_mesh(
             radius, color, transform, meshes, materials,
         ))
+        .insert(RigidBody::Fixed)
+        .insert(Collider::ball(radius))
+        .insert(ActiveEvents::COLLISION_EVENTS)
         .insert(Planet::default())
         .insert(Selectable)
         // ADD TEXT3D OVERLAY WITH BEVY_TEXT_MESH: https://crates.io/crates/bevy_text_mesh
@@ -153,20 +161,29 @@ pub fn spawn_ship(
     transform: Transform,
     set_destination: Option<Vec3>,
 ) {
+    let entity = commands.spawn()
+        .insert(RigidBody::Dynamic)
+        .insert(Velocity { ..Default::default() })
+        .insert(GravityScale(0.))
+        .insert(LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Y | LockedAxes::TRANSLATION_LOCKED_Z)
+        .insert(ExternalForce {..Default::default()})
+        .insert(ExternalImpulse {..Default::default()})
+        .insert(Destination { dest: set_destination })
+        .insert(Selectable)
+        .id();
+
     match ship_type {
         ShipType::Fighter => {
-            commands
-                .spawn_bundle(generate_ship_mesh(ship_type, transform, meshes, materials))
-                .insert(Movement { speed: 6. })
-                .insert(Destination { dest: set_destination })
-                .insert(Selectable);
+            commands.entity(entity)
+                .insert_bundle(generate_ship_mesh(ship_type, transform, meshes, materials))
+                .insert(Collider::ball(0.2))
+                .insert(Movement { speed: 6. });
         }
         ShipType::Trade => {
-            commands
-                .spawn_bundle(generate_ship_mesh(ship_type, transform, meshes, materials))
-                .insert(Movement { speed: 3. })
-                .insert(Destination { dest: set_destination })
-                .insert(Selectable);
+            commands.entity(entity)
+                .insert_bundle(generate_ship_mesh(ship_type, transform, meshes, materials))
+                .insert(Collider::ball(0.2))
+                .insert(Movement { speed: 3. });
         }
     }
 }

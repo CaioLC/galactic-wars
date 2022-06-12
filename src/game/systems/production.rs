@@ -3,6 +3,7 @@ use crate::game::{self, layers_util};
 use crate::game::{components::characteristics::*, Selected};
 use bevy::prelude::*;
 use bevy_text_mesh::prelude::*;
+use bevy_rapier3d::prelude::*;
 
 pub fn produce_fighters(
     time: Res<Time>,
@@ -39,6 +40,14 @@ pub fn deploy_fighters(
             }
             planet.fighters = 0.0;
         }
+    }
+}
+
+pub fn store_planes(
+    mut collision_events: EventReader<CollisionEvent>,
+) {
+    for collision_event in collision_events.iter() {
+        println!("Received collision event: {:?}", collision_event);
     }
 }
 pub fn update_count_mesh(mut q_child: Query<(&Parent, &mut TextMesh)>, q_parent: Query<&Planet>) {

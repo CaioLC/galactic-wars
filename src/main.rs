@@ -7,7 +7,7 @@ use bevy::{diagnostic::FrameTimeDiagnosticsPlugin, prelude::*};
 use bevy_inspector_egui::{InspectorPlugin, RegisterInspectable, WorldInspectorPlugin};
 
 pub use camera::CameraPlugin;
-pub use game::BoardPlugin;
+pub use game::GamePlugin;
 
 fn main() {
     let mut app = App::new();
@@ -21,7 +21,7 @@ fn main() {
     .add_plugins(DefaultPlugins)
     .add_plugin(FrameTimeDiagnosticsPlugin::default())
     .add_plugin(CameraPlugin)
-    .add_plugin(BoardPlugin);
+    .add_plugin(GamePlugin);
     //.add_startup_system(UI_setup)
 
     #[cfg(feature = "debug")]
