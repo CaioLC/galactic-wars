@@ -33,12 +33,12 @@ impl Plugin for GamePlugin {
             .add_plugin(TextMeshPlugin)
             .add_system(production::produce_fighters)
             .add_system(production::deploy_fighters)
+            .add_system(production::update_count_mesh)
             .add_system(movement::turn_to_destination)
             .add_system(movement::move_to_destination)
             .add_system(movement::set_destination)
             .add_system(movement::damping_shift)
             .add_system(movement::collision_avoidance)
-            .add_system(production::update_count_mesh)
             .add_system(selection::box_select)
             .add_system(selection::update_box)
             .add_system(selection::draw_box_select);
@@ -56,12 +56,12 @@ fn setup(
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     for i in 0..board_params.no_of_planets {
-        let transf = Transform::from_xyz(i as f32, i as f32, layers_util::get_z(Layers::Planets));
+        let transf = Transform::from_xyz(i as f32 * 10., i as f32 * 10., layers_util::get_z(Layers::Planets));
         spawn_planet(
             &mut commands,
             &mut meshes,
             &mut materials,
-            6.0,
+            2.0 * i as f32 + 3.0,
             transf,
             Color::GREEN,
             asset_server.load("fonts/ShareTechMono.ttf"),
@@ -88,8 +88,8 @@ fn setup(
         &mut meshes,
         &mut materials,
         ShipType::Trade,
-        Transform::from_xyz(-2., 2., layers_util::get_z(Layers::Ships)),
-        None
+        Transform::from_xyz(-7., 2., layers_util::get_z(Layers::Ships)),
+        DestinationEnum::None
     );
 }
 
@@ -161,7 +161,7 @@ pub fn spawn_ship(
     materials: &mut ResMut<Assets<StandardMaterial>>,
     ship_type: ShipType,
     transform: Transform,
-    set_destination: Option<Vec3>,
+    set_destination: DestinationEnum,
 ) {
     let entity = commands.spawn()
         .insert(RigidBody::Dynamic)
@@ -170,7 +170,7 @@ pub fn spawn_ship(
         .insert(LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Y | LockedAxes::TRANSLATION_LOCKED_Z)
         .insert(Damping{linear_damping: 5.0, ..Default::default()})
         .insert(ExternalImpulse {..Default::default()})
-        .insert(Destination { dest: set_destination })
+        .insert(Destination(set_destination))
         .insert(Selectable)
         .id();
 
@@ -178,6 +178,7 @@ pub fn spawn_ship(
         ShipType::Fighter => {
             commands.entity(entity)
                 .insert_bundle(generate_ship_mesh(ship_type, transform, meshes, materials))
+                .insert(Fighter)
                 .insert(Collider::ball(0.5))
                 .insert(Avoidance {impulse: Vec3::ZERO, max_see_ahead: 8.0 })
                 .insert(Movement { speed: 35. });
@@ -185,6 +186,7 @@ pub fn spawn_ship(
         ShipType::Trade => {
             commands.entity(entity)
                 .insert_bundle(generate_ship_mesh(ship_type, transform, meshes, materials))
+                .insert(Trader)
                 .insert(Collider::ball(0.5))
                 .insert(Avoidance {impulse: Vec3::ZERO, max_see_ahead: 4.0 })
                 .insert(Movement { speed: 12. });

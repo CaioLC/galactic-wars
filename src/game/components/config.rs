@@ -4,7 +4,7 @@ pub struct ConfigPlugin;
 impl Plugin for ConfigPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(BoardAssets::default())
-            .insert_resource(BoardParams { no_of_planets: 1 });
+            .insert_resource(BoardParams { no_of_planets: 3 });
     }
 }
 

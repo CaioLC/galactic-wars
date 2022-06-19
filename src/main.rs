@@ -29,7 +29,6 @@ fn main() {
         // .add_plugin(InspectorPlugin::<game::components::interact::Destination>::new());
         .register_inspectable::<game::components::characteristics::EnRouteBehaviour>()
         .register_inspectable::<game::components::characteristics::Movement>()
-        .register_inspectable::<game::components::characteristics::Destination>()
         .register_inspectable::<game::components::characteristics::Avoidance>()
         .register_inspectable::<game::components::characteristics::Planet>();
 

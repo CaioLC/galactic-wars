@@ -9,7 +9,7 @@ pub enum Layers {
 pub fn get_z(obj_type: Layers) -> f32 {
     match obj_type {
         Layers::Ships => 0.,
-        Layers::Planets => 1.,
+        Layers::Planets => 0.,
         Layers::BoxSelect => 3.,
     }
 }

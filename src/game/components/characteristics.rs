@@ -3,6 +3,12 @@ use bevy::prelude::*;
 // EVENTS
 
 // COMPONENTS
+#[derive(Component)]
+pub struct Fighter;
+
+#[derive(Component)]
+pub struct Trader;
+
 #[cfg_attr(feature = "debug", derive(bevy_inspector_egui::Inspectable))]
 #[derive(Component)]
 pub struct Movement {
@@ -16,10 +22,13 @@ pub struct Avoidance {
     pub max_see_ahead: f32
 }
 
-#[cfg_attr(feature = "debug", derive(bevy_inspector_egui::Inspectable))]
 #[derive(Component)]
-pub struct Destination {
-    pub dest: Option<Vec3>,
+pub struct Destination(pub DestinationEnum);
+
+pub enum DestinationEnum {
+    None,
+    Space(Vec3),
+    Planet { planet: Entity, loc: Vec3 }
 }
 
 #[cfg_attr(feature = "debug", derive(bevy_inspector_egui::Inspectable))]
