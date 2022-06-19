@@ -1,8 +1,19 @@
 use bevy::prelude::*;
+
+// EVENTS
+
+// COMPONENTS
 #[cfg_attr(feature = "debug", derive(bevy_inspector_egui::Inspectable))]
 #[derive(Component)]
 pub struct Movement {
     pub speed: f32,
+}
+
+#[cfg_attr(feature = "debug", derive(bevy_inspector_egui::Inspectable))]
+#[derive(Component)]
+pub struct Avoidance {
+    pub impulse: Vec3,
+    pub max_see_ahead: f32
 }
 
 #[cfg_attr(feature = "debug", derive(bevy_inspector_egui::Inspectable))]
@@ -27,7 +38,6 @@ pub enum ShipType {
 #[derive(Component)]
 pub struct Planet {
     pub fighters: f32,
-    pub traders: f32,
     pub size: f32,
 }
 
@@ -35,7 +45,6 @@ impl Default for Planet {
     fn default() -> Self {
         Self {
             fighters: 0.,
-            traders: 0.,
             size: 1.,
         }
     }

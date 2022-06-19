@@ -1,4 +1,8 @@
+use std::f32::consts::PI;
+use std::iter::Enumerate;
+
 use crate::camera::MouseWorldPos;
+use crate::game::layers_util::Layers;
 use crate::game::{self, layers_util};
 use crate::game::{components::characteristics::*, Selected};
 use bevy::prelude::*;
@@ -21,20 +25,21 @@ pub fn deploy_fighters(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    mut query: Query<(&mut Planet, &Transform), With<Selected>>,
+    mut query: Query<(&mut Planet, &GlobalTransform), With<Selected>>,
     mouse: Res<Input<MouseButton>>,
     mouse_pos: Res<MouseWorldPos>,
 ) {
     if mouse.just_pressed(MouseButton::Right) {
         for (mut planet, transform) in query.iter_mut() {
             let dest = layers_util::vec2_to_vec3(mouse_pos.0, layers_util::Layers::Ships);
-            for _ in 0..planet.fighters as i32 {
+            for i in 0..planet.fighters as i32 {
+                let ship_pos = compute_ship_spawn_position(i, transform.translation, planet.size);
                 game::spawn_ship(
                     &mut commands,
                     &mut meshes,
                     &mut materials,
                     ShipType::Fighter,
-                    transform.clone(),
+                    ship_pos,
                     Some(dest)
                 )
             }
@@ -43,7 +48,17 @@ pub fn deploy_fighters(
     }
 }
 
-pub fn store_planes(
+fn compute_ship_spawn_position(i: i32, translation: Vec3, size: f32) -> Transform {
+    let angle_pos = i as f32 * PI / 80.0;
+    println!("{angle_pos}");
+    let x = translation.x + (size + 1.0) + angle_pos.cos();
+    let y =  translation.y + (size + 1.0) * angle_pos.sin();
+    let z = layers_util::get_z(Layers::Ships);
+    Transform::from_xyz(x, y, z)
+}
+
+
+pub fn store_fighters(
     mut collision_events: EventReader<CollisionEvent>,
 ) {
     for collision_event in collision_events.iter() {

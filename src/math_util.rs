@@ -30,3 +30,7 @@ pub fn get_angle_difference(target: f32, initial: f32) -> f32 {
     let n = 2.0 * std::f32::consts::PI;
     (a - (a / n).floor() * n) - std::f32::consts::PI
 }
+
+pub fn drop_z(vector: Vec3) -> Vec3 {
+    Vec3::new(vector.x, vector.y, 0.)
+}

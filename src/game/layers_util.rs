@@ -17,3 +17,7 @@ pub fn get_z(obj_type: Layers) -> f32 {
 pub fn vec2_to_vec3(xy: Vec2, obj_type: Layers) -> Vec3 {
     Vec3::new(xy.x, xy.y, get_z(obj_type))
 }
+
+pub fn to_layer(vec: Vec3, obj_type: Layers) -> Vec3 {
+    Vec3::new(vec.x, vec.y, get_z(obj_type))
+}

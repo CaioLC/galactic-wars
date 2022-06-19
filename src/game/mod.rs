@@ -19,7 +19,7 @@ pub struct GamePlugin;
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(ConfigPlugin)
-            .insert_resource(FighterTimer(Timer::from_seconds(2.0, true)))
+            .insert_resource(FighterTimer(Timer::from_seconds(3.0, true)))
             .insert_resource(TraderTimer(Timer::from_seconds(5.0, true)))
             // TODO: Create SelectionPlugin
             .insert_resource(IsSelecting {
@@ -36,6 +36,8 @@ impl Plugin for GamePlugin {
             .add_system(movement::turn_to_destination)
             .add_system(movement::move_to_destination)
             .add_system(movement::set_destination)
+            .add_system(movement::damping_shift)
+            .add_system(movement::collision_avoidance)
             .add_system(production::update_count_mesh)
             .add_system(selection::box_select)
             .add_system(selection::update_box)
@@ -59,28 +61,28 @@ fn setup(
             &mut commands,
             &mut meshes,
             &mut materials,
-            1.5,
+            6.0,
             transf,
             Color::GREEN,
             asset_server.load("fonts/ShareTechMono.ttf"),
         );
     }
-    spawn_ship(
-        &mut commands,
-        &mut meshes,
-        &mut materials,
-        ShipType::Fighter,
-        Transform::from_xyz(2., 2., layers_util::get_z(Layers::Ships)),
-        None
-    );
-    spawn_ship(
-        &mut commands,
-        &mut meshes,
-        &mut materials,
-        ShipType::Fighter,
-        Transform::from_xyz(3., 3., layers_util::get_z(Layers::Ships)),
-        None
-    );
+    // spawn_ship(
+        // &mut commands,
+        // &mut meshes,
+        // &mut materials,
+        // ShipType::Fighter,
+        // Transform::from_xyz(2., 2., layers_util::get_z(Layers::Ships)),
+        // None
+    // );
+    // spawn_ship(
+        // &mut commands,
+        // &mut meshes,
+        // &mut materials,
+        // ShipType::Fighter,
+        // Transform::from_xyz(3., 3., layers_util::get_z(Layers::Ships)),
+        // None
+    // );
     spawn_ship(
         &mut commands,
         &mut meshes,
@@ -108,7 +110,7 @@ fn spawn_planet(
         .insert(RigidBody::Fixed)
         .insert(Collider::ball(radius))
         .insert(ActiveEvents::COLLISION_EVENTS)
-        .insert(Planet::default())
+        .insert(Planet{fighters: 0., size: radius})
         .insert(Selectable)
         // ADD TEXT3D OVERLAY WITH BEVY_TEXT_MESH: https://crates.io/crates/bevy_text_mesh
         .with_children(|parent| {
@@ -166,7 +168,7 @@ pub fn spawn_ship(
         .insert(Velocity { ..Default::default() })
         .insert(GravityScale(0.))
         .insert(LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Y | LockedAxes::TRANSLATION_LOCKED_Z)
-        .insert(ExternalForce {..Default::default()})
+        .insert(Damping{linear_damping: 5.0, ..Default::default()})
         .insert(ExternalImpulse {..Default::default()})
         .insert(Destination { dest: set_destination })
         .insert(Selectable)
@@ -176,14 +178,16 @@ pub fn spawn_ship(
         ShipType::Fighter => {
             commands.entity(entity)
                 .insert_bundle(generate_ship_mesh(ship_type, transform, meshes, materials))
-                .insert(Collider::ball(0.2))
-                .insert(Movement { speed: 6. });
+                .insert(Collider::ball(0.5))
+                .insert(Avoidance {impulse: Vec3::ZERO, max_see_ahead: 8.0 })
+                .insert(Movement { speed: 35. });
         }
         ShipType::Trade => {
             commands.entity(entity)
                 .insert_bundle(generate_ship_mesh(ship_type, transform, meshes, materials))
-                .insert(Collider::ball(0.2))
-                .insert(Movement { speed: 3. });
+                .insert(Collider::ball(0.5))
+                .insert(Avoidance {impulse: Vec3::ZERO, max_see_ahead: 4.0 })
+                .insert(Movement { speed: 12. });
         }
     }
 }

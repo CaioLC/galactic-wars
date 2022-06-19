@@ -5,11 +5,12 @@ use super::super::layers_util::*;
 use crate::camera::MouseWorldPos;
 use crate::game::components::characteristics::*;
 use crate::game::components::selection::*;
+use crate::game::layers_util;
 use crate::math_util;
 
 pub fn turn_to_destination(
     time: Res<Time>,
-    mut query: Query<(&Transform, &Destination, &mut Velocity), With<Selected>>,
+    mut query: Query<(&Transform, &Destination, &mut Velocity)>,
 ) {
     for (transform, destination, mut vel) in query.iter_mut() {
         if let Some(d) = destination.dest {
@@ -27,18 +28,20 @@ pub fn turn_to_destination(
 
 pub fn move_to_destination(
     time: Res<Time>,
-    mut query: Query<(&mut Destination, &mut Velocity,&Transform, &Movement)>,
+    mut query: Query<(&mut Destination, &mut Velocity, &mut ExternalImpulse, &Avoidance, &Transform, &Movement)>,
 ) {
-    for (mut dest, mut vel, transform, mov) in query.iter_mut() {
+    for (mut dest, mut vel, mut impulse, avoid, transform, mov) in query.iter_mut() {
         if let Some(d) = dest.dest {
             let dist = transform.translation.distance(d);
-            if dist < 0.5 {
+            let accel = dist.min(mov.speed);
+            // println!("{accel}");
+            if dist < 1.0 {
                 dest.dest = None;
-                vel.linvel = Vec3::ZERO;
+                impulse.impulse = Vec3::ZERO;
                 vel.angvel = Vec3::ZERO;
             } else {
-                let max_speed = 10.0_f32.min(time.delta_seconds() * mov.speed * 40. * dist);
-                vel.linvel = transform.up() * max_speed;
+                let force = (transform.up() + avoid.impulse).normalize() * accel * time.delta_seconds();
+                impulse.impulse = force;   
             }
         }
     }
@@ -60,6 +63,41 @@ pub fn set_destination(
                 }
                 None => destination.dest = Some(ship_dest),
             };
+        }
+    }
+}
+
+pub fn damping_shift(
+    mut query: Query<(&Destination, &mut Damping)>
+) {
+    for (destination, mut damping) in query.iter_mut() {
+        match destination.dest {
+            Some(_) => {
+                damping.angular_damping = 0.0;
+            }
+            None => {
+                damping.angular_damping = 20.0;
+            }
+        }
+    }
+}
+
+pub fn collision_avoidance(
+    mut ships: Query<(&mut Avoidance, &Transform)>,
+    planets: Query<(&Transform, &Planet)>,
+) {
+    for (mut avoid, t_ship) in ships.iter_mut() {
+        let ahead = layers_util::to_layer(t_ship.translation + t_ship.up() * avoid.max_see_ahead, Layers::Planets);
+        for (t_planet, planet) in planets.iter() {
+            // TODO: adjust code to avoid more than one planet ("find nearest threat")
+            let dist = t_planet.translation.distance(ahead);
+            if dist < planet.size {
+                let avoid_force = ahead - t_planet.translation;
+                let force = math_util::drop_z(avoid_force).normalize();
+                avoid.impulse = force;
+            } else if avoid.impulse != Vec3::ZERO {
+                avoid.impulse = Vec3::ZERO;
+            }
         }
     }
 }
