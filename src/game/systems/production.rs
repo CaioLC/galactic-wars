@@ -6,8 +6,8 @@ use crate::game::layers_util::Layers;
 use crate::game::{self, layers_util};
 use crate::game::{components::characteristics::*, Selected};
 use bevy::prelude::*;
-use bevy_text_mesh::prelude::*;
 use bevy_rapier3d::prelude::*;
+use bevy_text_mesh::prelude::*;
 
 pub fn produce_fighters(
     time: Res<Time>,
@@ -25,7 +25,7 @@ pub fn produce_fighters(
     for collision_event in collision_events.iter() {
         match collision_event {
             CollisionEvent::Started(planet, ship, _) => {
-                if let Ok((_,_, dest)) = query_ships.get(*ship) {
+                if let Ok((_, _, dest)) = query_ships.get(*ship) {
                     if let DestinationEnum::Planet { planet: p, loc: _ } = dest.0 {
                         if *planet == p {
                             commands.entity(*ship).despawn_recursive();
@@ -35,7 +35,7 @@ pub fn produce_fighters(
                         }
                     }
                 }
-            },
+            }
             CollisionEvent::Stopped(_, _, _) => {}
         }
     }
@@ -60,7 +60,7 @@ pub fn deploy_fighters(
                     &mut materials,
                     ShipType::Fighter,
                     ship_pos,
-                    DestinationEnum::Space(dest)
+                    DestinationEnum::Space(dest),
                 )
             }
             planet.fighters = 0.0;
@@ -72,11 +72,10 @@ fn compute_ship_spawn_position(i: i32, translation: Vec3, size: f32) -> Transfor
     let angle_pos = i as f32 * PI / 80.0;
     println!("{angle_pos}");
     let x = translation.x + (size + 1.0) + angle_pos.cos();
-    let y =  translation.y + (size + 1.0) * angle_pos.sin();
+    let y = translation.y + (size + 1.0) * angle_pos.sin();
     let z = layers_util::get_z(Layers::Ships);
     Transform::from_xyz(x, y, z)
 }
-
 
 pub fn update_count_mesh(mut q_child: Query<(&Parent, &mut TextMesh)>, q_parent: Query<&Planet>) {
     // TODO: CHECK IF QUERYING ALL TEXTMESHES IS OK OR WE NEED TO ADD A COMPONENT TO LIMIT FILTER.

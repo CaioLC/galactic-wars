@@ -19,7 +19,7 @@ pub struct Movement {
 #[derive(Component)]
 pub struct Avoidance {
     pub impulse: Vec3,
-    pub max_see_ahead: f32
+    pub max_see_ahead: f32,
 }
 
 #[derive(Component)]
@@ -28,7 +28,7 @@ pub struct Destination(pub DestinationEnum);
 pub enum DestinationEnum {
     None,
     Space(Vec3),
-    Planet { planet: Entity, loc: Vec3 }
+    Planet { planet: Entity, loc: Vec3 },
 }
 
 #[cfg_attr(feature = "debug", derive(bevy_inspector_egui::Inspectable))]

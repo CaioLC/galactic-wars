@@ -12,7 +12,7 @@ pub use bevy_text_mesh::prelude::*;
 pub use components::{characteristics::*, config::*, selection::*};
 pub use systems::*;
 
-use self::layers_util::Layers;
+use self::layers_util::{get_z, Layers};
 
 pub struct GamePlugin;
 
@@ -42,7 +42,7 @@ impl Plugin for GamePlugin {
             .add_system(selection::box_select)
             .add_system(selection::update_box)
             .add_system(selection::draw_box_select);
-        
+
         #[cfg(feature = "debug")]
         app.add_plugin(RapierDebugRenderPlugin::default());
     }
@@ -56,7 +56,11 @@ fn setup(
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     for i in 0..board_params.no_of_planets {
-        let transf = Transform::from_xyz(i as f32 * 10., i as f32 * 10., layers_util::get_z(Layers::Planets));
+        let transf = Transform::from_xyz(
+            i as f32 * 10.,
+            i as f32 * 10.,
+            layers_util::get_z(Layers::Planets),
+        );
         spawn_planet(
             &mut commands,
             &mut meshes,
@@ -68,20 +72,20 @@ fn setup(
         );
     }
     // spawn_ship(
-        // &mut commands,
-        // &mut meshes,
-        // &mut materials,
-        // ShipType::Fighter,
-        // Transform::from_xyz(2., 2., layers_util::get_z(Layers::Ships)),
-        // None
+    // &mut commands,
+    // &mut meshes,
+    // &mut materials,
+    // ShipType::Fighter,
+    // Transform::from_xyz(2., 2., layers_util::get_z(Layers::Ships)),
+    // None
     // );
     // spawn_ship(
-        // &mut commands,
-        // &mut meshes,
-        // &mut materials,
-        // ShipType::Fighter,
-        // Transform::from_xyz(3., 3., layers_util::get_z(Layers::Ships)),
-        // None
+    // &mut commands,
+    // &mut meshes,
+    // &mut materials,
+    // ShipType::Fighter,
+    // Transform::from_xyz(3., 3., layers_util::get_z(Layers::Ships)),
+    // None
     // );
     spawn_ship(
         &mut commands,
@@ -89,7 +93,15 @@ fn setup(
         &mut materials,
         ShipType::Trade,
         Transform::from_xyz(-7., 2., layers_util::get_z(Layers::Ships)),
-        DestinationEnum::None
+        DestinationEnum::None,
+    );
+
+    spawn_bullet(
+        &mut commands,
+        &mut meshes,
+        &mut materials,
+        Transform::from_xyz(17., 2., layers_util::get_z(Layers::Ships)).with_scale(Vec3::new(0.02, 0.04, 1.)),
+        Color::RED,
     );
 }
 
@@ -110,7 +122,10 @@ fn spawn_planet(
         .insert(RigidBody::Fixed)
         .insert(Collider::ball(radius))
         .insert(ActiveEvents::COLLISION_EVENTS)
-        .insert(Planet{fighters: 0., size: radius})
+        .insert(Planet {
+            fighters: 0.,
+            size: radius,
+        })
         .insert(Selectable)
         // ADD TEXT3D OVERLAY WITH BEVY_TEXT_MESH: https://crates.io/crates/bevy_text_mesh
         .with_children(|parent| {
@@ -119,14 +134,17 @@ fn spawn_planet(
                     text: String::from("0"),
                     style: TextMeshStyle {
                         font,
-                        font_size: SizeUnit::NonStandard(56.),
+                        font_size: SizeUnit::NonStandard(70.),
                         color: Color::rgb(0.1, 0.2, 0.1),
                         mesh_quality: Quality::Custom(128),
                         ..Default::default()
                     },
+                    size: TextMeshSize {
+                        ..Default::default()
+                    },
                     ..Default::default()
                 },
-                transform: Transform::from_xyz(-0.2, -0.5, 2.),
+                transform: Transform::from_xyz(-0.2, -0.5, get_z(Layers::Text)),
                 ..Default::default()
             });
         });
@@ -163,32 +181,52 @@ pub fn spawn_ship(
     transform: Transform,
     set_destination: DestinationEnum,
 ) {
-    let entity = commands.spawn()
+    let entity = commands
+        .spawn()
         .insert(RigidBody::Dynamic)
-        .insert(Velocity { ..Default::default() })
+        .insert(Velocity {
+            ..Default::default()
+        })
         .insert(GravityScale(0.))
-        .insert(LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Y | LockedAxes::TRANSLATION_LOCKED_Z)
-        .insert(Damping{linear_damping: 5.0, ..Default::default()})
-        .insert(ExternalImpulse {..Default::default()})
+        .insert(
+            LockedAxes::ROTATION_LOCKED_X
+                | LockedAxes::ROTATION_LOCKED_Y
+                | LockedAxes::TRANSLATION_LOCKED_Z,
+        )
+        .insert(Damping {
+            linear_damping: 5.0,
+            ..Default::default()
+        })
+        .insert(ExternalImpulse {
+            ..Default::default()
+        })
         .insert(Destination(set_destination))
         .insert(Selectable)
         .id();
 
     match ship_type {
         ShipType::Fighter => {
-            commands.entity(entity)
+            commands
+                .entity(entity)
                 .insert_bundle(generate_ship_mesh(ship_type, transform, meshes, materials))
                 .insert(Fighter)
                 .insert(Collider::ball(0.5))
-                .insert(Avoidance {impulse: Vec3::ZERO, max_see_ahead: 8.0 })
+                .insert(Avoidance {
+                    impulse: Vec3::ZERO,
+                    max_see_ahead: 8.0,
+                })
                 .insert(Movement { speed: 35. });
         }
         ShipType::Trade => {
-            commands.entity(entity)
+            commands
+                .entity(entity)
                 .insert_bundle(generate_ship_mesh(ship_type, transform, meshes, materials))
                 .insert(Trader)
                 .insert(Collider::ball(0.5))
-                .insert(Avoidance {impulse: Vec3::ZERO, max_see_ahead: 4.0 })
+                .insert(Avoidance {
+                    impulse: Vec3::ZERO,
+                    max_see_ahead: 4.0,
+                })
                 .insert(Movement { speed: 12. });
         }
     }
@@ -268,4 +306,46 @@ fn ship_trader_mesh() -> Mesh {
     mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, uvs);
     mesh.set_indices(Some(Indices::U32(vec![0, 1, 2, 0, 2, 3, 0, 3, 4, 0, 4, 5])));
     mesh
+}
+
+fn bullet_mesh() -> Mesh {
+    Mesh::from(shape::Capsule {
+        radius: 3.,
+        depth: 20.,
+        ..Default::default()
+    })
+}
+
+fn generate_bullet(
+    color: Color,
+    transform: Transform,
+    meshes: &mut ResMut<Assets<Mesh>>,
+    materials: &mut ResMut<Assets<StandardMaterial>>,
+) -> MaterialMeshBundle<StandardMaterial> {
+    let mesh = bullet_mesh();
+    PbrBundle {
+        mesh: meshes.add(mesh),
+        transform,
+        material: materials.add(StandardMaterial {
+            base_color: color,
+            unlit: true,
+            ..default()
+        }),
+        ..default()
+    }
+}
+
+// TODO:
+fn spawn_bullet(
+    commands: &mut Commands,
+    meshes: &mut ResMut<Assets<Mesh>>,
+    materials: &mut ResMut<Assets<StandardMaterial>>,
+    transform: Transform,
+    color: Color,
+) {
+    commands
+        .spawn_bundle(generate_bullet(color, transform, meshes, materials))
+        .insert(RigidBody::Dynamic);
+    // .insert(Collider::ball(radius))
+    // ADD TEXT3D OVERLAY WITH BEVY_TEXT_MESH: https://crates.io/crates/bevy_text_mesh
 }

@@ -4,6 +4,7 @@ pub enum Layers {
     Ships,
     Planets,
     BoxSelect,
+    Text,
 }
 
 pub fn get_z(obj_type: Layers) -> f32 {
@@ -11,6 +12,7 @@ pub fn get_z(obj_type: Layers) -> f32 {
         Layers::Ships => 0.,
         Layers::Planets => 0.,
         Layers::BoxSelect => 3.,
+        Layers::Text => 7.5,
     }
 }
 
