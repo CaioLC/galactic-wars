@@ -9,6 +9,12 @@ pub struct Fighter;
 #[derive(Component)]
 pub struct Trader;
 
+#[derive(Component)]
+pub struct Bullet {
+    pub origin: Vec3,
+    pub distance: f32,
+}
+
 #[cfg_attr(feature = "debug", derive(bevy_inspector_egui::Inspectable))]
 #[derive(Component)]
 pub struct Movement {

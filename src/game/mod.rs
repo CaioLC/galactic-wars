@@ -39,6 +39,9 @@ impl Plugin for GamePlugin {
             .add_system(movement::set_destination)
             .add_system(movement::damping_shift)
             .add_system(movement::collision_avoidance)
+            .add_system(combat::cast_ray)
+            .add_system(combat::fire_bullet)
+            .add_system(combat::despawn_bullet)
             .add_system(selection::box_select)
             .add_system(selection::update_box)
             .add_system(selection::draw_box_select);
@@ -96,11 +99,29 @@ fn setup(
         DestinationEnum::None,
     );
 
+    spawn_ship(
+        &mut commands,
+        &mut meshes,
+        &mut materials,
+        ShipType::Trade,
+        Transform::from_xyz(-7., 10., layers_util::get_z(Layers::Ships)),
+        DestinationEnum::None,
+    );
+
     spawn_bullet(
         &mut commands,
         &mut meshes,
         &mut materials,
-        Transform::from_xyz(17., 2., layers_util::get_z(Layers::Ships)).with_scale(Vec3::new(0.02, 0.04, 1.)),
+        Transform::from_xyz(17., 2., layers_util::get_z(Layers::Ships))
+            .with_scale(Vec3::new(0.02, 0.04, 1.)),
+        Color::RED,
+    );
+    spawn_bullet(
+        &mut commands,
+        &mut meshes,
+        &mut materials,
+        Transform::from_xyz(17., 42., layers_util::get_z(Layers::Ships))
+            .with_scale(Vec3::new(0.02, 0.04, 1.)),
         Color::RED,
     );
 }
@@ -335,8 +356,7 @@ fn generate_bullet(
     }
 }
 
-// TODO:
-fn spawn_bullet(
+pub fn spawn_bullet(
     commands: &mut Commands,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
@@ -345,7 +365,11 @@ fn spawn_bullet(
 ) {
     commands
         .spawn_bundle(generate_bullet(color, transform, meshes, materials))
-        .insert(RigidBody::Dynamic);
+        .insert(Bullet {origin: transform.translation, distance: 50.0 })
+        .insert(RigidBody::Dynamic)
+        .insert(Velocity {
+            linvel: transform.up() * 40.,
+            angvel: Vec3::ZERO,
+        });
     // .insert(Collider::ball(radius))
-    // ADD TEXT3D OVERLAY WITH BEVY_TEXT_MESH: https://crates.io/crates/bevy_text_mesh
 }
