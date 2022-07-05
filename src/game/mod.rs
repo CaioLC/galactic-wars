@@ -365,7 +365,10 @@ pub fn spawn_bullet(
 ) {
     commands
         .spawn_bundle(generate_bullet(color, transform, meshes, materials))
-        .insert(Bullet {origin: transform.translation, distance: 50.0 })
+        .insert(Bullet {
+            origin: transform.translation,
+            distance: 50.0,
+        })
         .insert(RigidBody::Dynamic)
         .insert(Velocity {
             linvel: transform.up() * 40.,

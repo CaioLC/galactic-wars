@@ -9,7 +9,8 @@ default = [ ]
 debug = [ "bevy-inspector-egui" ]
 
 [dependencies]
-bevy = "0.7"
+bevy = { version = "0.7", features = ["dynamic"]}
 bevy-inspector-egui = { version = "0.10", optional = true }
 bevy_text_mesh = "0.2.0"
 bevy_rapier3d = { version = "0.14.1", features = ["debug-render","simd-stable", "wasm-bindgen"]}
+kayak_ui = { git="https://github.com/StarArawn/kayak_ui", rev="e7fc09a00ac7e7e39100e0084b528b117545cbfa", features = ["bevy_renderer"] }

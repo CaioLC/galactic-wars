@@ -1,10 +1,7 @@
-use crate::game::{
-    self,
-    components::*,
-};
+use crate::game::{self, components::*};
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-use characteristics::{Bullet, Trader, Fighter};
+use characteristics::{Bullet, Fighter, Trader};
 
 /* Cast a ray inside of a system. */
 pub fn cast_ray(
@@ -74,11 +71,8 @@ pub fn fire_bullet(
         }
     }
 }
- 
-pub fn despawn_bullet(
-    mut commands: Commands,
-    query: Query<(Entity, &Bullet, &Transform)>
-) {
+
+pub fn despawn_bullet(mut commands: Commands, query: Query<(Entity, &Bullet, &Transform)>) {
     for (e, bullet, transform) in query.iter() {
         if transform.translation.distance(bullet.origin) > bullet.distance {
             commands.entity(e).despawn_recursive();
