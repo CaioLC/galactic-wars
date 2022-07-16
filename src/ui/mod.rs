@@ -1,7 +1,14 @@
-use bevy::prelude::{App, AssetServer, Commands, Plugin, Res, ResMut, State, SystemSet};
-use kayak_ui::bevy::{BevyContext, BevyKayakUIPlugin, FontMapping, UICameraBundle};
-use kayak_ui::core::{render, rsx, widget, Event, EventType, KayakContextRef, KeyCode, OnEvent};
-use kayak_ui::widgets::{App as KApp, Text};
+use bevy::prelude::{App, AssetServer, Commands, Handle, Plugin, Res, ResMut, State, SystemSet};
+use kayak_ui::bevy::{BevyContext, BevyKayakUIPlugin, FontMapping, ImageManager, UICameraBundle};
+use kayak_ui::core::{
+    render, rsx,
+    styles::{Edge, LayoutType, Style, StyleProp, Units},
+    widget, Bound, Event, EventType, KayakContextRef, KeyCode, MutableBound, OnEvent,
+};
+use kayak_ui::widgets::{App as KApp, NinePatch, Text};
+
+mod menu_ui;
+use menu_ui::*;
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 enum GameState {
@@ -31,18 +38,13 @@ fn handle_input(context: &mut KayakContextRef, event: &mut Event) {
     };
 }
 
-#[widget]
-fn StateSwitcher() {
-    rsx! {
-        <Text content={"Press space to switch states!".to_string()} size={32.0} />
-    }
-}
-
 fn create_main_menu(mut commands: Commands) {
     let context = BevyContext::new(|context| {
         render! {
             <KApp on_event={Some(OnEvent::new(handle_input))}>
                 <Text content={"Main Menu".to_string()} size={32.0} />
+                <Counter />
+                <MenuSelector />
                 <StateSwitcher />
             </KApp>
         }
@@ -64,7 +66,13 @@ fn create_options_menu(mut commands: Commands) {
     commands.insert_resource(context);
 }
 
-fn create_play_menu(mut commands: Commands) {
+fn create_play_menu(
+    mut commands: Commands,
+    mut image_manager: ResMut<ImageManager>,
+    asset_server: Res<AssetServer>,
+) {
+    let handle = asset_server.load("kenny/panel_brown.png");
+    let panel_brown_handle = image_manager.get(&handle);
     let context = BevyContext::new(|context| {
         render! {
             <KApp on_event={Some(OnEvent::new(handle_input))}>
@@ -80,11 +88,15 @@ fn create_play_menu(mut commands: Commands) {
 fn startup(
     mut commands: Commands,
     mut font_mapping: ResMut<FontMapping>,
+    mut image_manager: ResMut<ImageManager>,
     asset_server: Res<AssetServer>,
 ) {
     commands.spawn_bundle(UICameraBundle::new());
-
     font_mapping.set_default(asset_server.load("fonts/roboto.kayak_font"));
+    // add font
+    let main_font = asset_server.load("antiquity.kayak_font");
+    font_mapping.add("Antiquity", main_font.clone());
+    // add image
 }
 
 fn destroy(mut commands: Commands) {
