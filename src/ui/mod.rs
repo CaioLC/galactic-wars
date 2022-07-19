@@ -1,11 +1,12 @@
 use bevy::prelude::{App, AssetServer, Commands, Handle, Plugin, Res, ResMut, State, SystemSet};
+use bevy::window::{WindowDescriptor, Windows};
 use kayak_ui::bevy::{BevyContext, BevyKayakUIPlugin, FontMapping, ImageManager, UICameraBundle};
 use kayak_ui::core::{
     render, rsx,
     styles::{Edge, LayoutType, Style, StyleProp, Units},
     widget, Bound, Event, EventType, KayakContextRef, KeyCode, MutableBound, OnEvent,
 };
-use kayak_ui::widgets::{App as KApp, NinePatch, Text};
+use kayak_ui::widgets::{App as KApp, NinePatch, Text, Window};
 
 mod menu_ui;
 use menu_ui::*;
@@ -15,6 +16,33 @@ enum GameState {
     MainMenu,
     Options,
     Play,
+}
+
+#[derive(Debug, Clone, Eq, PartialEq)]
+enum AnchorPoint {
+    TopLeft,
+    TopCenter,
+    TopRight,
+    CenterLeft,
+    Center,
+    CenterRight,
+    BottomLeft,
+    BottomCenter,
+    BottomRight,
+}
+
+fn anchor(size: (f32, f32), parent: (f32, f32), anchor_point: AnchorPoint) -> (f32, f32) {
+    match anchor_point {
+        AnchorPoint::TopLeft => (0., 0.),
+        AnchorPoint::TopCenter => (parent.0 / 2. - size.0 / 2., 0.),
+        AnchorPoint::TopRight => (parent.0 - size.0, 0.),
+        AnchorPoint::CenterLeft => (0., parent.1 / 2. - size.1 / 2.),
+        AnchorPoint::Center => (parent.0 / 2. - size.0 / 2., parent.1 / 2. - size.1 / 2.),
+        AnchorPoint::CenterRight => (parent.0 - size.0, parent.1 / 2. - size.1 / 2.),
+        AnchorPoint::BottomLeft => (0., parent.1 - size.1),
+        AnchorPoint::BottomCenter => (parent.1 / 2. - size.0 / 2., parent.1 - size.1),
+        AnchorPoint::BottomRight => (parent.0 - size.0, parent.1 - size.1),
+    }
 }
 
 fn swap(mut state: ResMut<State<GameState>>) {
@@ -38,13 +66,18 @@ fn handle_input(context: &mut KayakContextRef, event: &mut Event) {
     };
 }
 
-fn create_main_menu(mut commands: Commands) {
+fn create_main_menu(mut commands: Commands, windows: Res<Windows>) {
+    let window = windows.primary();
+    let parent = (window.width(), window.height());
+    let size = (300.0, 300.0);
+    let position1 = anchor(size, parent, AnchorPoint::Center);
     let context = BevyContext::new(|context| {
         render! {
             <KApp on_event={Some(OnEvent::new(handle_input))}>
-                <Text content={"Main Menu".to_string()} size={32.0} />
-                <Counter />
-                <MenuSelector />
+                <Window position={position1} size={size}>
+                    <Text content={"GALACTIC WARS".to_string()} size={32.0} />
+                    <MenuSelector />
+                </Window>
                 <StateSwitcher />
             </KApp>
         }
@@ -53,7 +86,7 @@ fn create_main_menu(mut commands: Commands) {
     commands.insert_resource(context);
 }
 
-fn create_options_menu(mut commands: Commands) {
+fn create_options_menu(mut commands: Commands, windows: Res<Windows>) {
     let context = BevyContext::new(|context| {
         render! {
             <KApp on_event={Some(OnEvent::new(handle_input))}>
