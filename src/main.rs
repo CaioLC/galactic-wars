@@ -1,6 +1,7 @@
 pub mod camera;
 pub mod game;
 pub mod math_util;
+pub mod state;
 pub mod ui;
 
 use bevy::{diagnostic::FrameTimeDiagnosticsPlugin, prelude::*};
@@ -9,7 +10,8 @@ use bevy_inspector_egui::{InspectorPlugin, RegisterInspectable, WorldInspectorPl
 
 pub use camera::CameraPlugin;
 pub use game::GamePlugin;
-use ui::StatePlugin;
+pub use state::StatePlugin;
+pub use ui::UiPlugin;
 
 fn main() {
     let mut app = App::new();
@@ -24,6 +26,7 @@ fn main() {
     .add_plugin(FrameTimeDiagnosticsPlugin::default())
     .add_plugin(CameraPlugin)
     .add_plugin(StatePlugin)
+    .add_plugin(UiPlugin)
     .add_plugin(GamePlugin);
     //.add_startup_system(UI_setup)
 

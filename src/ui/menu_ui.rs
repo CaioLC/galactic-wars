@@ -1,62 +1,85 @@
-use bevy::prelude::Handle;
+use bevy::app::AppExit;
+use bevy::prelude::{EventWriter, Handle};
 use kayak_ui::bevy::BevyContext;
-use kayak_ui::core::styles::LayoutType;
+use kayak_ui::core::styles::{Corner, Edge, LayoutType};
 use kayak_ui::core::Color;
 use kayak_ui::core::{
     render, rsx,
     styles::{Style, StyleProp, Units},
     use_state, widget, Bound, Children, EventType, MutableBound, OnEvent, WidgetProps,
 };
-use kayak_ui::widgets::{App as KApp, Button, Element, Text, Window};
+use kayak_ui::widgets::{App as KApp, Background, Button, Element, Text, Window};
 
 #[widget]
-pub fn Counter() {
-    // Styles
-    let text_styles = Style {
-        ..Default::default()
-    };
-
-    let button_text_styles = Style {
+pub fn GameMenu() {
+    let container_styles = Style {
+        background_color: StyleProp::Value(Color::WHITE),
+        border_radius: StyleProp::Value(Corner::all(15.0)),
+        bottom: StyleProp::Value(Units::Stretch(1.0)),
+        height: StyleProp::Value(Units::Pixels(500.0)),
+        layout_type: StyleProp::Value(LayoutType::Column),
         left: StyleProp::Value(Units::Stretch(1.0)),
+        padding: StyleProp::Value(Edge::all(Units::Stretch(1.0))),
         right: StyleProp::Value(Units::Stretch(1.0)),
+        row_between: StyleProp::Value(Units::Pixels(20.0)),
+        top: StyleProp::Value(Units::Stretch(1.0)),
+        width: StyleProp::Value(Units::Pixels(360.0)),
         ..Default::default()
     };
 
-    // State implementation
-    let (count, set_count, ..) = use_state!(0i32);
+    let button_styles = Style {
+        background_color: StyleProp::Value(Color::BLACK),
+        height: StyleProp::Value(Units::Pixels(50.0)),
+        width: StyleProp::Value(Units::Pixels(200.0)),
+        padding_top: StyleProp::Value(Units::Stretch(1.0)),
+        padding_bottom: StyleProp::Value(Units::Stretch(1.0)),
+        ..Default::default()
+    };
 
-    let on_event = OnEvent::new(move |_, event| match event.event_type {
-        EventType::Click(..) => set_count(count + 1),
+    let on_click_new_game = OnEvent::new(|_, event| match event.event_type {
+        EventType::Click(..) => {
+            dbg!("new game!");
+        }
         _ => {}
     });
 
-    let count_text = format!("Current Count: {}", count);
-    rsx! {
-        <>
-            <Window position={(50.0, 50.0)} size={(300.0, 300.0)} title={"Counter Example".to_string() }>
-                <Text styles={Some(text_styles)} size={32.0} content={count_text} />
-                <Button on_event={Some(on_event)}>
-                    <Text size={24.0} content={"Count!".to_string()} />
-                </Button>
-            </Window>
-        </>
-    }
-}
+    let on_click_settings = OnEvent::new(|_, event| match event.event_type {
+        EventType::Click(..) => {
+            dbg!("Settings");
+        }
+        _ => {}
+    });
 
-#[widget]
-pub fn Menu() {
-    rsx! {
-        <>
-            <Window>
-            </Window>
-        </>
-    }
-}
+    let on_click_exit = OnEvent::new(|ctx, event| match event.event_type {
+        EventType::Click(..) => ctx.query_world::<EventWriter<AppExit>, _, _>(|mut exit| {
+            exit.send(AppExit);
+        }),
+        _ => {}
+    });
 
-#[widget]
-pub fn StateSwitcher() {
     rsx! {
-        <Text content={"Press space to switch states!".to_string()} size={32.0} />
+        <Background styles={Some(container_styles)}>
+            <Button
+                on_event={Some(on_click_new_game)}
+                styles={Some(button_styles)}
+            >
+                <Text size={20.0} content={"New Game".to_string()} />
+            </Button>
+
+            <Button
+                on_event={Some(on_click_settings)}
+                styles={Some(button_styles)}
+            >
+                <Text size={20.0} content={"Settings".to_string()} />
+            </Button>
+
+            <Button
+                on_event={Some(on_click_exit)}
+                styles={Some(button_styles)}
+            >
+                <Text size={20.0} content={"Exit".to_string()} />
+            </Button>
+        </Background>
     }
 }
 

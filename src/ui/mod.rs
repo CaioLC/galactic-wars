@@ -1,22 +1,17 @@
 use bevy::prelude::{App, AssetServer, Commands, Handle, Plugin, Res, ResMut, State, SystemSet};
-use bevy::window::{WindowDescriptor, Windows};
+use bevy::window::Windows;
 use kayak_ui::bevy::{BevyContext, BevyKayakUIPlugin, FontMapping, ImageManager, UICameraBundle};
+use kayak_ui::core::bind;
 use kayak_ui::core::{
     render, rsx,
     styles::{Edge, LayoutType, Style, StyleProp, Units},
     widget, Bound, Event, EventType, KayakContextRef, KeyCode, MutableBound, OnEvent,
 };
-use kayak_ui::widgets::{App as KApp, NinePatch, Text, Window};
+use kayak_ui::widgets::{App as KApp, Text, Window};
 
+use crate::state::GameState;
 mod menu_ui;
 use menu_ui::*;
-
-#[derive(Debug, Clone, Eq, PartialEq, Hash)]
-enum GameState {
-    MainMenu,
-    Options,
-    Play,
-}
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 enum AnchorPoint {
@@ -45,16 +40,6 @@ fn anchor(size: (f32, f32), parent: (f32, f32), anchor_point: AnchorPoint) -> (f
     }
 }
 
-fn swap(mut state: ResMut<State<GameState>>) {
-    if *state.current() == GameState::MainMenu {
-        let _ = state.set(GameState::Options);
-    } else if *state.current() == GameState::Options {
-        let _ = state.set(GameState::Play);
-    } else {
-        let _ = state.set(GameState::MainMenu);
-    }
-}
-
 fn handle_input(context: &mut KayakContextRef, event: &mut Event) {
     match event.event_type {
         EventType::KeyDown(event) => {
@@ -78,7 +63,6 @@ fn create_main_menu(mut commands: Commands, windows: Res<Windows>) {
                     <Text content={"GALACTIC WARS".to_string()} size={32.0} />
                     <MenuSelector />
                 </Window>
-                <StateSwitcher />
             </KApp>
         }
     });
@@ -91,7 +75,6 @@ fn create_options_menu(mut commands: Commands, windows: Res<Windows>) {
         render! {
             <KApp on_event={Some(OnEvent::new(handle_input))}>
                 <Text content={"Options".to_string()} size={32.0} />
-                <StateSwitcher />
             </KApp>
         }
     });
@@ -110,7 +93,6 @@ fn create_play_menu(
         render! {
             <KApp on_event={Some(OnEvent::new(handle_input))}>
                 <Text content={"Play".to_string()} size={32.0} />
-                <StateSwitcher />
             </KApp>
         }
     });
@@ -118,10 +100,10 @@ fn create_play_menu(
     commands.insert_resource(context);
 }
 
-fn startup(
+fn ui_startup(
     mut commands: Commands,
     mut font_mapping: ResMut<FontMapping>,
-    mut image_manager: ResMut<ImageManager>,
+    // mut image_manager: ResMut<ImageManager>,
     asset_server: Res<AssetServer>,
 ) {
     commands.spawn_bundle(UICameraBundle::new());
@@ -130,26 +112,32 @@ fn startup(
     let main_font = asset_server.load("antiquity.kayak_font");
     font_mapping.add("Antiquity", main_font.clone());
     // add image
+    //
+
+    let context = BevyContext::new(|context| {
+        render! {
+            <KApp>
+                <GameMenu/>
+            </KApp>
+        }
+    });
+
+    commands.insert_resource(context);
 }
 
-fn destroy(mut commands: Commands) {
-    commands.remove_resource::<BevyContext>();
+pub fn bind_gamestate(state: Res<State<GameState>>, binding: Res<Binding<GameState>>) {
+    if state.is_changed() {
+        binding.set(state.as_ref().clone());
+    }
 }
 
-pub struct StatePlugin;
+pub struct UiPlugin;
 
-impl Plugin for StatePlugin {
+impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
-        app.add_state(GameState::MainMenu)
-            .add_plugin(BevyKayakUIPlugin)
-            .add_startup_system(startup)
-            .add_system_set(SystemSet::on_enter(GameState::MainMenu).with_system(create_main_menu))
-            .add_system_set(SystemSet::on_exit(GameState::MainMenu).with_system(destroy))
-            .add_system_set(
-                SystemSet::on_enter(GameState::Options).with_system(create_options_menu),
-            )
-            .add_system_set(SystemSet::on_exit(GameState::Options).with_system(destroy))
-            .add_system_set(SystemSet::on_enter(GameState::Play).with_system(create_play_menu))
-            .add_system_set(SystemSet::on_exit(GameState::Play).with_system(destroy));
+        app.add_plugin(BevyKayakUIPlugin)
+            .insert_resource(bind(GameState::MainMenu))
+            .add_startup_system(ui_startup)
+            .add_system(bind_gamestate);
     }
 }
