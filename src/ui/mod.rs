@@ -1,7 +1,8 @@
 use bevy::prelude::{App, AssetServer, Commands, Handle, Plugin, Res, ResMut, State, SystemSet};
 use bevy::window::Windows;
+use iyes_loopless::state::CurrentState;
 use kayak_ui::bevy::{BevyContext, BevyKayakUIPlugin, FontMapping, ImageManager, UICameraBundle};
-use kayak_ui::core::bind;
+use kayak_ui::core::{bind, Binding};
 use kayak_ui::core::{
     render, rsx,
     styles::{Edge, LayoutType, Style, StyleProp, Units},
@@ -9,7 +10,7 @@ use kayak_ui::core::{
 };
 use kayak_ui::widgets::{App as KApp, Text, Window};
 
-use crate::state::GameState;
+use crate::state::{self, GameState};
 mod menu_ui;
 use menu_ui::*;
 
@@ -40,65 +41,65 @@ fn anchor(size: (f32, f32), parent: (f32, f32), anchor_point: AnchorPoint) -> (f
     }
 }
 
-fn handle_input(context: &mut KayakContextRef, event: &mut Event) {
-    match event.event_type {
-        EventType::KeyDown(event) => {
-            if event.key() == KeyCode::Space {
-                context.query_world::<ResMut<State<GameState>>, _, _>(swap);
-            }
-        }
-        _ => {}
-    };
-}
+// fn handle_input(context: &mut KayakContextRef, event: &mut Event) {
+//     match event.event_type {
+//         EventType::KeyDown(event) => {
+//             if event.key() == KeyCode::Space {
+//                 context.query_world::<ResMut<State<GameState>>, _, _>(swap);
+//             }
+//         }
+//         _ => {}
+//     };
+// }
 
-fn create_main_menu(mut commands: Commands, windows: Res<Windows>) {
-    let window = windows.primary();
-    let parent = (window.width(), window.height());
-    let size = (300.0, 300.0);
-    let position1 = anchor(size, parent, AnchorPoint::Center);
-    let context = BevyContext::new(|context| {
-        render! {
-            <KApp on_event={Some(OnEvent::new(handle_input))}>
-                <Window position={position1} size={size}>
-                    <Text content={"GALACTIC WARS".to_string()} size={32.0} />
-                    <MenuSelector />
-                </Window>
-            </KApp>
-        }
-    });
+// fn create_main_menu(mut commands: Commands, windows: Res<Windows>) {
+//     let window = windows.primary();
+//     let parent = (window.width(), window.height());
+//     let size = (300.0, 300.0);
+//     let position1 = anchor(size, parent, AnchorPoint::Center);
+//     let context = BevyContext::new(|context| {
+//         render! {
+//             <KApp on_event={Some(OnEvent::new(handle_input))}>
+//                 <Window position={position1} size={size}>
+//                     <Text content={"GALACTIC WARS".to_string()} size={32.0} />
+//                     <MenuSelector />
+//                 </Window>
+//             </KApp>
+//         }
+//     });
 
-    commands.insert_resource(context);
-}
+//     commands.insert_resource(context);
+// }
 
-fn create_options_menu(mut commands: Commands, windows: Res<Windows>) {
-    let context = BevyContext::new(|context| {
-        render! {
-            <KApp on_event={Some(OnEvent::new(handle_input))}>
-                <Text content={"Options".to_string()} size={32.0} />
-            </KApp>
-        }
-    });
+// fn create_options_menu(mut commands: Commands, windows: Res<Windows>) {
+//     let context = BevyContext::new(|context| {
+//         render! {
+//             <KApp on_event={Some(OnEvent::new(handle_input))}>
+//                 <Text content={"Options".to_string()} size={32.0} />
+//             </KApp>
+//         }
+//     });
 
-    commands.insert_resource(context);
-}
+//     commands.insert_resource(context);
+// }
 
-fn create_play_menu(
-    mut commands: Commands,
-    mut image_manager: ResMut<ImageManager>,
-    asset_server: Res<AssetServer>,
-) {
-    let handle = asset_server.load("kenny/panel_brown.png");
-    let panel_brown_handle = image_manager.get(&handle);
-    let context = BevyContext::new(|context| {
-        render! {
-            <KApp on_event={Some(OnEvent::new(handle_input))}>
-                <Text content={"Play".to_string()} size={32.0} />
-            </KApp>
-        }
-    });
+// fn create_play_menu(
+//     mut commands: Commands,
+//     mut image_manager: ResMut<ImageManager>,
+//     asset_server: Res<AssetServer>,
+// ) {
+//     let handle = asset_server.load("kenny/panel_brown.png");
+//     let panel_brown_handle = image_manager.get(&handle);
+//     let context = BevyContext::new(|context| {
+//         render! {
+//             <KApp on_event={Some(OnEvent::new(handle_input))}>
+//                 <Text content={"Play".to_string()} size={32.0} />
+//             </KApp>
+//         }
+//     });
 
-    commands.insert_resource(context);
-}
+//     commands.insert_resource(context);
+// }
 
 fn ui_startup(
     mut commands: Commands,
@@ -125,9 +126,9 @@ fn ui_startup(
     commands.insert_resource(context);
 }
 
-pub fn bind_gamestate(state: Res<State<GameState>>, binding: Res<Binding<GameState>>) {
+pub fn bind_gamestate(state: Res<CurrentState<GameState>>, binding: Res<Binding<GameState>>) {
     if state.is_changed() {
-        binding.set(state.as_ref().clone());
+        binding.set(state.0.clone());
     }
 }
 
@@ -136,7 +137,7 @@ pub struct UiPlugin;
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(BevyKayakUIPlugin)
-            .insert_resource(bind(GameState::MainMenu))
+            .insert_resource(bind(state::STARTING_GAME_STATE))
             .add_startup_system(ui_startup)
             .add_system(bind_gamestate);
     }

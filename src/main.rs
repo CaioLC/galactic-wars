@@ -28,6 +28,7 @@ fn main() {
     .add_plugin(StatePlugin)
     .add_plugin(UiPlugin)
     .add_plugin(GamePlugin);
+
     //.add_startup_system(UI_setup)
 
     #[cfg(feature = "debug")]
