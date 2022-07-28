@@ -11,37 +11,13 @@ use kayak_ui::core::{
 use kayak_ui::core::{Binding, Color};
 use kayak_ui::widgets::{App as KApp, Background, Button, Element, If, Text, Window};
 
+use super::styles as css;
 use crate::state::{self, GameState};
 
 #[widget]
 pub fn GameMenu() {
-    let container_styles = Style {
-        background_color: StyleProp::Value(Color::WHITE),
-        border_radius: StyleProp::Value(Corner::all(15.0)),
-        bottom: StyleProp::Value(Units::Stretch(1.0)),
-        height: StyleProp::Value(Units::Pixels(500.0)),
-        layout_type: StyleProp::Value(LayoutType::Column),
-        left: StyleProp::Value(Units::Stretch(1.0)),
-        padding: StyleProp::Value(Edge::all(Units::Stretch(1.0))),
-        right: StyleProp::Value(Units::Stretch(1.0)),
-        row_between: StyleProp::Value(Units::Pixels(20.0)),
-        top: StyleProp::Value(Units::Stretch(1.0)),
-        width: StyleProp::Value(Units::Pixels(360.0)),
-        ..Default::default()
-    };
-
-    let button_styles = Style {
-        background_color: StyleProp::Value(Color::BLACK),
-        height: StyleProp::Value(Units::Pixels(50.0)),
-        width: StyleProp::Value(Units::Pixels(200.0)),
-        padding_top: StyleProp::Value(Units::Stretch(1.0)),
-        padding_bottom: StyleProp::Value(Units::Stretch(1.0)),
-        ..Default::default()
-    };
-
     let show_menus = {
         let gamestate = context.query_world::<Res<Binding<GameState>>, _, _>(|state| state.clone());
-
         context.bind(&gamestate);
         gamestate.get() == GameState::MainMenu
     };
@@ -72,24 +48,24 @@ pub fn GameMenu() {
     // RSX
     rsx! {
         <If condition={show_menus}>
-            <Background styles={Some(container_styles)}>
+            <Background styles={Some(css::container_style())}>
                 <Button
                     on_event={Some(on_click_new_game)}
-                    styles={Some(button_styles)}
+                    styles={Some(css::button_style())}
                 >
                     <Text size={20.0} content={"New Game".to_string()} />
                 </Button>
 
                 <Button
                     on_event={Some(on_click_settings)}
-                    styles={Some(button_styles)}
+                    styles={Some(css::button_style())}
                 >
                     <Text size={20.0} content={"Settings".to_string()} />
                 </Button>
 
                 <Button
                     on_event={Some(on_click_exit)}
-                    styles={Some(button_styles)}
+                    styles={Some(css::button_style())}
                 >
                     <Text size={20.0} content={"Exit".to_string()} />
                 </Button>
@@ -99,21 +75,35 @@ pub fn GameMenu() {
 }
 
 #[widget]
-pub fn MenuSelector() {
-    let button_container_style = Style {
+pub fn PauseMenu() {
+    let show_pause = {
+        let gamestate = context.query_world::<Res<Binding<GameState>>, _, _>(|state| state.clone());
+        context.bind(&gamestate);
+        gamestate.get() == GameState::Pause
+    };
+    let pause_ribbon = Style {
+        bottom: StyleProp::Value(Units::Stretch(1.0)),
+        left: StyleProp::Value(Units::Stretch(1.0)),
+        top: StyleProp::Value(Units::Stretch(1.0)),
+        right: StyleProp::Value(Units::Stretch(1.0)),
+
+        height: StyleProp::Value(Units::Percentage(40.0)),
+        width: StyleProp::Value(Units::Percentage(100.0)),
+
         layout_type: StyleProp::Value(LayoutType::Column),
-        width: StyleProp::Value(Units::Percentage(50.)),
-        height: StyleProp::Value(Units::Auto),
-        top: StyleProp::Value(Units::Percentage(20.)),
+        background_color: StyleProp::Value(Color::new(0.6, 0.6, 0.6, 0.4)),
+        border_radius: StyleProp::Value(Corner::all(15.0)),
+        padding: StyleProp::Value(Edge::all(Units::Stretch(1.0))),
+        row_between: StyleProp::Value(Units::Pixels(20.0)),
         ..Default::default()
     };
 
+    // RSX
     rsx! {
-        <Element styles={Some(button_container_style)}>
-            <Text content={"this is button1".to_string()} size={15.0} />
-            <Text content={"this is button2".to_string()} size={20.0} />
-            <Text content={"this is button3".to_string()} size={32.0} />
-            <Text content={"this is button4".to_string()} size={45.0} />
-        </Element>
+        <If condition={show_pause}>
+            <Background styles={Some(pause_ribbon)}>
+                <Text size={20.0} content={"GAME PAUSED".to_string()} />
+            </Background>
+        </If>
     }
 }

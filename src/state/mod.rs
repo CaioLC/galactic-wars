@@ -9,6 +9,7 @@ pub enum GameState {
     MainMenu,
     Options,
     InGame,
+    Pause,
 }
 
 pub struct StatePlugin;
@@ -23,8 +24,8 @@ impl Plugin for StatePlugin {
             //         .with_stage(SystemStage::parallel().with_system(producer_tick)),
             // )
             .add_loopless_state(STARTING_GAME_STATE)
-            .add_system(stage_key_bindings);
-        // .add_enter_system(&GameState::InGame, setup_game);
+            .add_system(stage_key_bindings.run_not_in_state(GameState::MainMenu))
+            .add_enter_system(GameState::InGame, setup_game);
     }
 }
 
@@ -33,13 +34,25 @@ impl Plugin for StatePlugin {
 //     dbg!("tick!");
 // }
 
-fn stage_key_bindings(mut commands: Commands, kb_input: Res<Input<KeyCode>>) {
+fn stage_key_bindings(
+    mut commands: Commands,
+    kb_input: Res<Input<KeyCode>>,
+    cur_state: Res<CurrentState<GameState>>,
+) {
     if kb_input.just_pressed(KeyCode::Escape) {
         commands.insert_resource(NextState(GameState::MainMenu));
+        dbg!("ESC");
+    }
+    if kb_input.just_pressed(KeyCode::Space) {
+        match cur_state.0 {
+            GameState::InGame => commands.insert_resource(NextState(GameState::Pause)),
+            GameState::Pause => commands.insert_resource(NextState(GameState::InGame)),
+            _ => {}
+        }
+        dbg!("SPACE");
     }
 }
 
-// fn setup_game(mut commands: Commands) {
-//     dbg!("reset_game!");
-//     commands.insert_resource(NextState(GameState::InGame));
-// }
+fn setup_game() {
+    dbg!("reset_game!");
+}
