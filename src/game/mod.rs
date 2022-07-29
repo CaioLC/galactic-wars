@@ -7,10 +7,13 @@ use bevy::{
     render::mesh::{Indices, PrimitiveTopology},
 };
 use bevy_rapier3d::prelude::*;
-pub use bevy_text_mesh::prelude::*;
+use bevy_text_mesh::prelude::*;
+use iyes_loopless::prelude::*;
 
-pub use components::{characteristics::*, config::*, selection::*};
-pub use systems::*;
+use components::{characteristics::*, config::*, selection::*};
+use systems::*;
+
+use crate::state::GameState;
 
 use self::layers_util::{get_z, Layers};
 
@@ -26,25 +29,29 @@ impl Plugin for GamePlugin {
                 is_selecting: false,
                 mouse_enter: None,
             })
-            .add_event::<components::selection::SelectMany>()
+            .add_event::<SelectMany>()
             .add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
-            // .insert_resource(RapierConfiguration { gravity: Vec3::ZERO, ..Default::default() })
-            .add_startup_system(setup)
             .add_plugin(TextMeshPlugin)
-            .add_system(production::produce_fighters)
-            .add_system(production::deploy_fighters)
-            .add_system(production::update_count_mesh)
-            .add_system(movement::turn_to_destination)
-            .add_system(movement::move_to_destination)
-            .add_system(movement::set_destination)
-            .add_system(movement::damping_shift)
-            .add_system(movement::collision_avoidance)
-            .add_system(combat::cast_ray)
-            .add_system(combat::fire_bullet)
-            .add_system(combat::despawn_bullet)
-            .add_system(selection::box_select)
-            .add_system(selection::update_box)
-            .add_system(selection::draw_box_select);
+            .add_startup_system(setup)
+            .add_system_set(
+                ConditionSet::new()
+                    .run_in_state(GameState::InGame)
+                    .with_system(production::produce_fighters)
+                    .with_system(production::deploy_fighters)
+                    .with_system(production::update_count_mesh)
+                    .with_system(movement::turn_to_destination)
+                    .with_system(movement::move_to_destination)
+                    .with_system(movement::set_destination)
+                    .with_system(movement::damping_shift)
+                    .with_system(movement::collision_avoidance)
+                    .with_system(combat::cast_ray)
+                    .with_system(combat::fire_bullet)
+                    .with_system(combat::despawn_bullet)
+                    .with_system(selection::box_select)
+                    .with_system(selection::update_box)
+                    .with_system(selection::draw_box_select)
+                    .into(),
+            );
 
         #[cfg(feature = "debug")]
         app.add_plugin(RapierDebugRenderPlugin::default());
@@ -74,22 +81,7 @@ fn setup(
             asset_server.load("fonts/ShareTechMono.ttf"),
         );
     }
-    // spawn_ship(
-    // &mut commands,
-    // &mut meshes,
-    // &mut materials,
-    // ShipType::Fighter,
-    // Transform::from_xyz(2., 2., layers_util::get_z(Layers::Ships)),
-    // None
-    // );
-    // spawn_ship(
-    // &mut commands,
-    // &mut meshes,
-    // &mut materials,
-    // ShipType::Fighter,
-    // Transform::from_xyz(3., 3., layers_util::get_z(Layers::Ships)),
-    // None
-    // );
+
     spawn_ship(
         &mut commands,
         &mut meshes,

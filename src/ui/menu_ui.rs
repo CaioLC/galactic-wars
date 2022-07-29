@@ -107,3 +107,36 @@ pub fn PauseMenu() {
         </If>
     }
 }
+
+#[widget]
+pub fn InGameUI() {
+    let in_game = {
+        let gamestate = context.query_world::<Res<Binding<GameState>>, _, _>(|state| state.clone());
+        context.bind(&gamestate);
+        gamestate.get() == GameState::InGame
+    };
+    rsx! {
+        <If condition={in_game}>
+             <TopNavBar/>
+             <MultiplayerAndLog/>
+             <GroupsBar/>
+             <MiniMap/>
+             <ChatBar/>
+        </If>
+    }
+}
+
+#[widget]
+pub fn TopNavBar() {}
+
+#[widget]
+pub fn MultiplayerAndLog() {}
+
+#[widget]
+pub fn GroupsBar() {}
+
+#[widget]
+pub fn MiniMap() {}
+
+#[widget]
+pub fn ChatBar() {}
