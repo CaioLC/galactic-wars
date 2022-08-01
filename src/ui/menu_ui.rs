@@ -1,6 +1,7 @@
 use bevy::app::AppExit;
-use bevy::prelude::*;
+use bevy::prelude::{Res, World, EventWriter};
 use iyes_loopless::state::NextState;
+
 use kayak_ui::bevy::BevyContext;
 use kayak_ui::core::styles::{Corner, Edge, LayoutType};
 use kayak_ui::core::{
@@ -9,7 +10,7 @@ use kayak_ui::core::{
     use_state, widget, Bound, Children, EventType, MutableBound, OnEvent, WidgetProps,
 };
 use kayak_ui::core::{Binding, Color};
-use kayak_ui::widgets::{App as KApp, Background, Button, Element, If, Text, Window};
+use kayak_ui::widgets::{Background, Button, Element, If, Text, Window, Image};
 
 use super::styles as css;
 use crate::state::{self, GameState};
@@ -117,26 +118,80 @@ pub fn InGameUI() {
     };
     rsx! {
         <If condition={in_game}>
-             <TopNavBar/>
-             <MultiplayerAndLog/>
-             <GroupsBar/>
-             <MiniMap/>
-             <ChatBar/>
+            <TopNavBar/>
+            // <MultiplayerAndLog/>
+            // <GroupsBar/>
+            // <MiniMap/>
+            // <ChatBar/>
         </If>
     }
 }
 
 #[widget]
-pub fn TopNavBar() {}
+pub fn TopNavBar() {
+    let nav_bar = Style {
+        width: StyleProp::Value(Units::Percentage(100.)),
+        height: StyleProp::Value(Units::Pixels(40.)), 
+        ..Default::default()
+    };
+
+    rsx! {
+        <Background styles={Some(nav_bar.with_style(css::center_align()))}>
+            <Resources/>
+            <ShipsAndPlanetsDetail/>
+            <QuickMenu/>
+        </Background>
+    }
+}
 
 #[widget]
-pub fn MultiplayerAndLog() {}
+pub fn Resources() {
+    rsx! {
+        <Text size={20.0} content={"5000".to_string()} />
+    }
+}
 
 #[widget]
-pub fn GroupsBar() {}
+pub fn ShipsAndPlanetsDetail() {
+    rsx! {
+        <Element>
+            <Text size={20.0} content={"figthers".to_string()} />
+            <Text size={20.0} content={"traders".to_string()} />
+            <Text size={20.0} content={"dreadnoughts".to_string()} />
+            <Text size={20.0} content={"planets".to_string()} />
+        </Element>
+    }
+}
 
 #[widget]
-pub fn MiniMap() {}
+pub fn QuickMenu (){
+    rsx! {
+        <Element>
+            <Text size={20.0} content={"A".to_string()} />
+            <Text size={20.0} content={"N".to_string()} />
+            <Text size={20.0} content={"S".to_string()} />
+            <Text size={20.0} content={"M".to_string()} />
+        </Element>
+    }
+}
 
 #[widget]
-pub fn ChatBar() {}
+pub fn IconAndText() {
+    rsx! {
+        <Element>
+            // <Image styles={Some()} handle={}/>
+            <Text size={20.0} content={"5000".to_string()} />
+        </Element>
+    }
+}
+// #[widget]
+// pub fn MultiplayerAndLog() {}
+
+// #[widget]
+// pub fn GroupsBar() {}
+
+// #[widget]
+// pub fn MiniMap() {}
+
+// #[widget]
+// pub fn ChatBar() {}

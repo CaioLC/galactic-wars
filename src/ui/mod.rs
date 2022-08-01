@@ -63,6 +63,7 @@ fn ui_startup(
             <KApp>
                 <GameMenu/>
                 <PauseMenu/>
+                <InGameUI/>
             </KApp>
         }
     });
