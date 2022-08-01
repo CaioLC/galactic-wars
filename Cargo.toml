@@ -9,7 +9,8 @@ default = [ ]
 debug = [ "bevy-inspector-egui" ]
 
 [dependencies]
-bevy = { version = "0.7", features = ["dynamic"]}
+# bevy = { version = "0.7", features = ["dynamic"]}
+bevy = { version = "0.7"} # feature dynamic should be disabled before release.
 bevy-inspector-egui = { version = "0.10", optional = true }
 bevy_text_mesh = "0.2.0"
 bevy_rapier3d = { version = "0.14.1", features = ["debug-render","simd-stable", "wasm-bindgen"]}
