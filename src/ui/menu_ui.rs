@@ -48,7 +48,7 @@ pub fn GameMenu() {
     // RSX
     rsx! {
         <If condition={show_menus}>
-            <Background styles={Some(css::container_style())}>
+            <Background styles={Some(css::container_style().with_style(css::center_align()))}>
                 <Button
                     on_event={Some(on_click_new_game)}
                     styles={Some(css::button_style())}

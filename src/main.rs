@@ -1,6 +1,7 @@
 pub mod camera;
 pub mod game;
 pub mod math_util;
+pub mod selection;
 pub mod state;
 pub mod ui;
 
@@ -12,6 +13,7 @@ pub use camera::CameraPlugin;
 pub use game::GamePlugin;
 pub use state::StatePlugin;
 pub use ui::UiPlugin;
+pub use selection::SelectionPlugin;
 
 fn main() {
     let mut app = App::new();
@@ -26,6 +28,7 @@ fn main() {
     .add_plugin(FrameTimeDiagnosticsPlugin::default())
     .add_plugin(CameraPlugin)
     .add_plugin(StatePlugin)
+    .add_plugin(SelectionPlugin)
     .add_plugin(UiPlugin)
     .add_plugin(GamePlugin);
 

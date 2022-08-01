@@ -4,8 +4,9 @@ use bevy_rapier3d::prelude::*;
 use super::super::layers_util::*;
 use crate::camera::MouseWorldPos;
 use crate::game::components::characteristics::*;
-use crate::game::components::selection::*;
+use crate::selection::components::Selected;
 use crate::game::layers_util;
+
 use crate::math_util;
 
 pub fn turn_to_destination(

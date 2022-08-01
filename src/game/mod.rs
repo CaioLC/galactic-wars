@@ -10,10 +10,11 @@ use bevy_rapier3d::prelude::*;
 use bevy_text_mesh::prelude::*;
 use iyes_loopless::prelude::*;
 
-use components::{characteristics::*, config::*, selection::*};
+use components::{characteristics::*, config::*};
 use systems::*;
 
 use crate::state::GameState;
+use crate::selection::components::Selectable;
 
 use self::layers_util::{get_z, Layers};
 
@@ -24,12 +25,6 @@ impl Plugin for GamePlugin {
         app.add_plugin(ConfigPlugin)
             .insert_resource(FighterTimer(Timer::from_seconds(3.0, true)))
             .insert_resource(TraderTimer(Timer::from_seconds(5.0, true)))
-            // TODO: Create SelectionPlugin
-            .insert_resource(IsSelecting {
-                is_selecting: false,
-                mouse_enter: None,
-            })
-            .add_event::<SelectMany>()
             .add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
             .add_plugin(TextMeshPlugin)
             .add_startup_system(setup)
@@ -47,9 +42,6 @@ impl Plugin for GamePlugin {
                     .with_system(combat::cast_ray)
                     .with_system(combat::fire_bullet)
                     .with_system(combat::despawn_bullet)
-                    .with_system(selection::box_select)
-                    .with_system(selection::update_box)
-                    .with_system(selection::draw_box_select)
                     .into(),
             );
 
