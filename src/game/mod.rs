@@ -2,6 +2,8 @@ pub mod components;
 pub mod layers_util;
 mod systems;
 
+use std::time::Duration;
+
 use bevy::{
     prelude::*,
     render::mesh::{Indices, PrimitiveTopology},
@@ -13,8 +15,8 @@ use iyes_loopless::prelude::*;
 use components::{characteristics::*, config::*};
 use systems::*;
 
-use crate::state::GameState;
 use crate::selection::components::Selectable;
+use crate::state::GameState;
 
 use self::layers_util::{get_z, Layers};
 
@@ -28,10 +30,16 @@ impl Plugin for GamePlugin {
             .add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
             .add_plugin(TextMeshPlugin)
             .add_startup_system(setup)
+            .add_stage_before(
+                CoreStage::Update,
+                "fighter_producer_tick",
+                FixedTimestepStage::new(Duration::from_secs_f32(0.5))
+                    .with_stage(SystemStage::parallel().with_system(production::production_tick)),
+            )
             .add_system_set(
                 ConditionSet::new()
                     .run_in_state(GameState::InGame)
-                    .with_system(production::produce_fighters)
+                    .with_system(production::fighter_enters_planet)
                     .with_system(production::deploy_fighters)
                     .with_system(production::update_count_mesh)
                     .with_system(movement::turn_to_destination)

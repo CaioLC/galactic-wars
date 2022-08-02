@@ -11,9 +11,9 @@ use bevy_inspector_egui::{InspectorPlugin, RegisterInspectable, WorldInspectorPl
 
 pub use camera::CameraPlugin;
 pub use game::GamePlugin;
+pub use selection::SelectionPlugin;
 pub use state::StatePlugin;
 pub use ui::UiPlugin;
-pub use selection::SelectionPlugin;
 
 fn main() {
     let mut app = App::new();

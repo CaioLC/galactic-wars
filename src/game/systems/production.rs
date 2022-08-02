@@ -1,28 +1,26 @@
 use std::f32::consts::PI;
-use std::iter::Enumerate;
 
 use crate::camera::MouseWorldPos;
+use crate::game::components::characteristics::*;
 use crate::game::layers_util::Layers;
 use crate::game::{self, layers_util};
-use crate::game::{components::characteristics::*};
 use crate::selection::components::Selected;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use bevy_text_mesh::prelude::*;
 
-pub fn produce_fighters(
-    time: Res<Time>,
-    mut timer: ResMut<FighterTimer>,
+pub fn production_tick(mut query: Query<&mut Planet>) {
+    for mut planet in query.iter_mut() {
+        planet.fighters += 1.;
+    }
+}
+
+pub fn fighter_enters_planet(
     mut query: Query<(Entity, &mut Planet)>,
     query_ships: Query<(Entity, &Fighter, &Destination)>,
     mut commands: Commands,
     mut collision_events: EventReader<CollisionEvent>,
 ) {
-    if timer.0.tick(time.delta()).just_finished() {
-        for (_, mut planet) in query.iter_mut() {
-            planet.fighters += 1.;
-        }
-    };
     for collision_event in collision_events.iter() {
         match collision_event {
             CollisionEvent::Started(planet, ship, _) => {

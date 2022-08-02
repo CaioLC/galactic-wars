@@ -4,8 +4,8 @@ use bevy_rapier3d::prelude::*;
 use super::super::layers_util::*;
 use crate::camera::MouseWorldPos;
 use crate::game::components::characteristics::*;
-use crate::selection::components::Selected;
 use crate::game::layers_util;
+use crate::selection::components::Selected;
 
 use crate::math_util;
 
