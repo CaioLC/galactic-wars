@@ -15,48 +15,23 @@ use crate::state::{self, GameState};
 mod menu_ui;
 use menu_ui::*;
 
+mod ingame_ui;
+use ingame_ui::*;
+
 mod styles;
-
-#[derive(Debug, Clone, Eq, PartialEq)]
-enum AnchorPoint {
-    TopLeft,
-    TopCenter,
-    TopRight,
-    CenterLeft,
-    Center,
-    CenterRight,
-    BottomLeft,
-    BottomCenter,
-    BottomRight,
-}
-
-fn anchor(size: (f32, f32), parent: (f32, f32), anchor_point: AnchorPoint) -> (f32, f32) {
-    match anchor_point {
-        AnchorPoint::TopLeft => (0., 0.),
-        AnchorPoint::TopCenter => (parent.0 / 2. - size.0 / 2., 0.),
-        AnchorPoint::TopRight => (parent.0 - size.0, 0.),
-        AnchorPoint::CenterLeft => (0., parent.1 / 2. - size.1 / 2.),
-        AnchorPoint::Center => (parent.0 / 2. - size.0 / 2., parent.1 / 2. - size.1 / 2.),
-        AnchorPoint::CenterRight => (parent.0 - size.0, parent.1 / 2. - size.1 / 2.),
-        AnchorPoint::BottomLeft => (0., parent.1 - size.1),
-        AnchorPoint::BottomCenter => (parent.1 / 2. - size.0 / 2., parent.1 - size.1),
-        AnchorPoint::BottomRight => (parent.0 - size.0, parent.1 - size.1),
-    }
-}
 
 fn ui_startup(
     mut commands: Commands,
     mut font_mapping: ResMut<FontMapping>,
-    // mut image_manager: ResMut<ImageManager>,
+    mut image_manager: ResMut<ImageManager>,
     asset_server: Res<AssetServer>,
 ) {
     commands.spawn_bundle(UICameraBundle::new());
     font_mapping.set_default(asset_server.load("fonts/roboto.kayak_font"));
     // add font
-    let main_font = asset_server.load("antiquity.kayak_font");
-    font_mapping.add("Antiquity", main_font.clone());
+    // let main_font = asset_server.load("fonts/antiquity.kayak_font");
+    // font_mapping.add("Antiquity", main_font.clone());
     // add image
-    //
 
     let context = BevyContext::new(|context| {
         render! {
