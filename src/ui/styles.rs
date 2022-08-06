@@ -1,6 +1,6 @@
 use kayak_ui::core::{
     styles::{Corner, Edge, LayoutType, PositionType, Style, StyleProp, Units},
-    Color,
+    Color, CursorIcon,
 };
 
 // const COLOR_PRIMARY: (f32, f32, f32, f32) = (44., 54., 57., 0.);
@@ -82,6 +82,7 @@ pub fn button_style() -> Style {
         width: StyleProp::Value(Units::Pixels(200.0)),
         padding_top: StyleProp::Value(Units::Stretch(1.0)),
         padding_bottom: StyleProp::Value(Units::Stretch(1.0)),
+        cursor: CursorIcon::Hand.into(),
         ..Default::default()
     }
 }

@@ -22,8 +22,8 @@ fn main() {
     let mut app = App::new();
     app.insert_resource(WindowDescriptor {
         title: "Galactic Wars".to_string(),
-        width: 1200.,
-        height: 900.,
+        width: 800.,
+        height: 600.,
         ..Default::default()
     })
     .insert_resource(Msaa { samples: 4 })

@@ -11,6 +11,12 @@ impl Plugin for AssetsPlugin {
 
 #[derive(AssetCollection)]
 pub struct ImageAssets {
+    #[asset(path = "img/Background.png")]
+    pub bg_main: Handle<Image>,
+    #[asset(path = "img/bg_light.png")]
+    pub bg_light: Handle<Image>,
+    #[asset(path = "img/bg_dark.png")]
+    pub bg_dark: Handle<Image>,
     #[asset(path = "img/Planet_31.png")]
     pub figther_handle: Handle<Image>,
     #[asset(path = "img/Planet_43.png")]

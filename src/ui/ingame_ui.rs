@@ -11,6 +11,7 @@ use kayak_ui::core::{Binding, Color};
 use kayak_ui::widgets::{Background, Element, If, Image, ImageProps, Text, TextProps};
 
 use super::styles::*;
+use super::generics::*;
 use crate::assets::ImageAssets;
 use crate::state::GameState;
 
@@ -100,7 +101,6 @@ pub fn TopNavBar() {
     rsx! {
         <Background styles={Some(nav_bar.with_style(center_top().with_style(bg_primary())))}>
             <Resources/>
-            <Image styles={Some(image_styles())} handle={dreadn_img} />
             <ShipsAndPlanetsDetail fighter_img trader_img dreadn_img planet_img />
             <QuickMenu/>
         </Background>
@@ -132,33 +132,21 @@ pub struct ShipsAndPlanetsProps {
 #[widget]
 pub fn ShipsAndPlanetsDetail(props: ShipsAndPlanetsProps) {
     let ships_nav_bar = Style {
-        col_between: StyleProp::Value(Units::Pixels(5.)),
+        col_between: StyleProp::Value(Units::Pixels(45.)),
         ..Default::default()
     };
     // context
     rsx! {
         <Element styles={Some(ships_nav_bar.with_style(center()).with_style(bg_primary()).with_style(row()))}>
-            <ImageAndTextBox image={props.planet_img} text={"Planets".to_string()} />
+            <ImageAndTextBox image={props.fighter_img} text={"62".to_string()} />
+            <ImageAndTextBox image={props.trader_img} text={"9".to_string()} />
+            <ImageAndTextBox image={props.dreadn_img} text={"2".to_string()} />
+            <ImageAndTextBox image={props.planet_img} text={"30".to_string()} />
         </Element>
     }
 }
 
-#[derive(WidgetProps, Clone, Debug, Default, PartialEq)]
-pub struct ImageAndTextProps {
-    pub image: u16,
-    pub text: String,
-}
 
-#[widget]
-pub fn ImageAndTextBox(props: ImageAndTextProps) {
-    let p = props.clone();
-    rsx! {
-        <Element styles={Some(row())}>
-            <Text size={20.} content={p.text.to_owned()} />
-            <Image styles={Some(image_styles())} handle={p.image} />
-        </Element>
-    }
-}
 
 #[widget]
 pub fn QuickMenu() {

@@ -1,4 +1,5 @@
 use bevy::app::AppExit;
+use bevy::ecs::world;
 use bevy::prelude::{EventWriter, Handle, Res, ResMut, World};
 use iyes_loopless::state::NextState;
 
@@ -10,22 +11,42 @@ use kayak_ui::core::{
     use_state, widget, Bound, Children, EventType, MutableBound, OnEvent, WidgetProps,
 };
 use kayak_ui::core::{Binding, Color};
-use kayak_ui::widgets::{Background, Button, Element, If, Image, Text, Window};
+use kayak_ui::widgets::{Background, Button, Element, If, Image, Text, Window, NinePatch};
 
 use super::styles::*;
+use super::generics as gen;
+use crate::assets::ImageAssets;
 use crate::state::{self, GameState};
 
 #[widget]
 pub fn GameMenu() {
+    // CSS
     let container_style = container_style()
         .with_style(bg_primary())
         .with_style(center());
+
+    // RESOURCES  
     let show_menus = {
         let gamestate = context.query_world::<Res<Binding<GameState>>, _, _>(|state| state.clone());
         context.bind(&gamestate);
         gamestate.get() == GameState::MainMenu
     };
-    // Events
+
+    let green_panel = context
+        .query_world::<Res<ImageAssets>,_,_>(|assets| {
+            assets.bg_main.clone()
+        });
+    let container = context
+        .get_global_mut::<World>()
+        .map(|mut world| {
+            world
+                .get_resource_mut::<ImageManager>()
+                .unwrap()
+                .get(&green_panel)
+        })
+        .unwrap();
+
+    // EVENTS
     let on_click_new_game = OnEvent::new(|ctx, event| match event.event_type {
         EventType::Click(..) => {
             // dbg!("new game!");
@@ -52,29 +73,26 @@ pub fn GameMenu() {
     // RSX
     rsx! {
         <If condition={show_menus}>
-            <Background styles={Some(container_style)}
+            <NinePatch styles={Some(container_style)} border={Edge::all(15.0)} handle={container}
             >
-                <Button
+                <gen::SnakeButton
                     on_event={Some(on_click_new_game)}
-                    styles={Some(button_style())}
                 >
                     <Text size={20.0} content={"New Game".to_string()} />
-                </Button>
+                </gen::SnakeButton>
 
-                <Button
+                <gen::SnakeButton
                     on_event={Some(on_click_settings)}
-                    styles={Some(button_style())}
                 >
                     <Text size={20.0} content={"Settings".to_string()} />
-                </Button>
+                </gen::SnakeButton>
 
-                <Button
+                <gen::SnakeButton
                     on_event={Some(on_click_exit)}
-                    styles={Some(button_style())}
                 >
                     <Text size={20.0} content={"Exit".to_string()} />
-                </Button>
-            </Background>
+                </gen::SnakeButton>
+            </NinePatch>
         </If>
     }
 }

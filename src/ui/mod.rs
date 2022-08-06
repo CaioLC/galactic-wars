@@ -1,37 +1,32 @@
-use bevy::prelude::{App, AssetServer, Commands, Handle, Plugin, Res, ResMut, State, SystemSet};
-use bevy::window::Windows;
+mod menu_ui;
+mod ingame_ui;
+mod styles;
+mod generics;
+
+use bevy::prelude::{App, AssetServer, Commands, Plugin, Res, ResMut};
 use iyes_loopless::state::CurrentState;
-use kayak_ui::bevy::{BevyContext, BevyKayakUIPlugin, FontMapping, ImageManager, UICameraBundle};
+
+use kayak_ui::bevy::{BevyContext, BevyKayakUIPlugin, FontMapping, UICameraBundle};
 use kayak_ui::core::{bind, Binding};
 use kayak_ui::core::{
-    render, rsx,
-    styles::{Edge, LayoutType, Style, StyleProp, Units},
-    widget, Bound, Event, EventType, KayakContextRef, KeyCode, MutableBound, OnEvent,
+    render,
+    MutableBound,
 };
-use kayak_ui::widgets::{App as KApp, Text, Window};
+use kayak_ui::widgets::App as KApp;
+
 
 use crate::state::{self, GameState};
-
-mod menu_ui;
 use menu_ui::*;
-
-mod ingame_ui;
 use ingame_ui::*;
-
-mod styles;
 
 fn ui_startup(
     mut commands: Commands,
     mut font_mapping: ResMut<FontMapping>,
-    mut image_manager: ResMut<ImageManager>,
+    // mut image_manager: ResMut<ImageManager>,
     asset_server: Res<AssetServer>,
 ) {
     commands.spawn_bundle(UICameraBundle::new());
     font_mapping.set_default(asset_server.load("fonts/roboto.kayak_font"));
-    // add font
-    // let main_font = asset_server.load("fonts/antiquity.kayak_font");
-    // font_mapping.add("Antiquity", main_font.clone());
-    // add image
 
     let context = BevyContext::new(|context| {
         render! {
