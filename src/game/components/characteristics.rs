@@ -69,7 +69,3 @@ impl Default for Planet {
 pub struct FighterProducer;
 #[derive(Component)]
 pub struct TraderProducer;
-
-pub struct FighterTimer(pub Timer);
-
-pub struct TraderTimer(pub Timer);

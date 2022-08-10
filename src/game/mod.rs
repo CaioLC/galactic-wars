@@ -1,5 +1,6 @@
 pub mod components;
 pub mod layers_util;
+pub mod resources;
 mod systems;
 
 use std::time::Duration;
@@ -12,11 +13,13 @@ use bevy_rapier3d::prelude::*;
 use bevy_text_mesh::prelude::*;
 use iyes_loopless::prelude::*;
 
-use components::{characteristics::*, config::*};
-use systems::*;
 
 use crate::selection::components::Selectable;
 use crate::state::GameState;
+
+use components::{characteristics::*, config::*};
+use resources::*;
+use systems::*;
 
 use self::layers_util::{get_z, Layers};
 
@@ -25,8 +28,11 @@ pub struct GamePlugin;
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(ConfigPlugin)
-            .insert_resource(FighterTimer(Timer::from_seconds(3.0, true)))
-            .insert_resource(TraderTimer(Timer::from_seconds(5.0, true)))
+            .insert_resource(resources::FightersDeployed(0))
+            .insert_resource(resources::FightersStored(0))
+            .insert_resource(resources::TotalTraders(0))
+            .insert_resource(resources::TotalDreadnoughts(0))
+            .insert_resource(resources::TotalPlanets(0))
             .add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
             .add_plugin(TextMeshPlugin)
             .add_startup_system(setup)
@@ -50,6 +56,10 @@ impl Plugin for GamePlugin {
                     .with_system(combat::cast_ray)
                     .with_system(combat::fire_bullet)
                     .with_system(combat::despawn_bullet)
+                    // this should be moved to a system set that runs at the end of frame
+                    .with_system(production::count_fighters_deployed)
+                    .with_system(production::count_fighters_stored)
+                    .with_system(production::count_traders)
                     .into(),
             );
 

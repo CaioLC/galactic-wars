@@ -3,11 +3,39 @@ use std::f32::consts::PI;
 use crate::camera::MouseWorldPos;
 use crate::game::components::characteristics::*;
 use crate::game::layers_util::Layers;
-use crate::game::{self, layers_util};
+use crate::game::{self, layers_util, resources};
 use crate::selection::components::Selected;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use bevy_text_mesh::prelude::*;
+
+pub fn count_fighters_deployed(
+    query: Query<&Fighter>,
+    mut res: ResMut<resources::FightersDeployed>,
+) {
+    let deployed_fighters = query.iter().count() as u32;
+    res.0 = deployed_fighters;
+    res.set_changed();
+}
+
+pub fn count_fighters_stored(
+    query: Query<&Planet>,
+    mut res: ResMut<resources::FightersStored>
+) {
+    let mut stored_fighters = 0.;
+        for p in query.iter() {
+            stored_fighters += p.fighters;
+        }
+    res.0 = stored_fighters as u32;
+    res.set_changed();
+}
+
+pub fn count_traders(
+    query: Query<&Trader>,
+    mut res: ResMut<resources::TotalTraders>
+) {
+    res.0 = query.iter().count() as u32;
+}
 
 pub fn production_tick(mut query: Query<&mut Planet>) {
     for mut planet in query.iter_mut() {

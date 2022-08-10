@@ -32,9 +32,9 @@ fn main() {
     .add_plugin(CameraPlugin)
     .add_plugin(StatePlugin)
     .add_plugin(SelectionPlugin)
-    .add_plugin(UiPlugin)
+    .add_plugin(GamePlugin)
     .add_plugin(AssetsPlugin)
-    .add_plugin(GamePlugin);
+    .add_plugin(UiPlugin);
 
     //.add_startup_system(UI_setup)
 

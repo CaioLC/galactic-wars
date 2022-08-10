@@ -11,10 +11,10 @@ use kayak_ui::core::{
     use_state, widget, Bound, Children, EventType, MutableBound, OnEvent, WidgetProps,
 };
 use kayak_ui::core::{Binding, Color};
-use kayak_ui::widgets::{Background, Button, Element, If, Image, Text, Window, NinePatch};
+use kayak_ui::widgets::{Background, Button, Element, If, Image, NinePatch, Text, Window};
 
-use super::styles::*;
 use super::generics as gen;
+use super::styles::*;
 use crate::assets::ImageAssets;
 use crate::state::{self, GameState};
 
@@ -25,17 +25,15 @@ pub fn GameMenu() {
         .with_style(bg_primary())
         .with_style(center());
 
-    // RESOURCES  
+    // RESOURCES
     let show_menus = {
         let gamestate = context.query_world::<Res<Binding<GameState>>, _, _>(|state| state.clone());
         context.bind(&gamestate);
         gamestate.get() == GameState::MainMenu
     };
 
-    let green_panel = context
-        .query_world::<Res<ImageAssets>,_,_>(|assets| {
-            assets.bg_main.clone()
-        });
+    let green_panel =
+        context.query_world::<Res<ImageAssets>, _, _>(|assets| assets.bg_main.clone());
     let container = context
         .get_global_mut::<World>()
         .map(|mut world| {

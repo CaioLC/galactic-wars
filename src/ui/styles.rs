@@ -52,6 +52,14 @@ pub fn bg_secondary() -> Style {
     }
 }
 
+pub fn debug() -> Style {
+    Style {
+        border_color: StyleProp::Value(Color::new(0., 1., 0., 1.)),
+        border: StyleProp::Value(Edge::all(2.0)),
+        ..Default::default()
+    }
+}
+
 pub fn container_style() -> Style {
     Style {
         height: StyleProp::Value(Units::Pixels(500.0)),

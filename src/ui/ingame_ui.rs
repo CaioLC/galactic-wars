@@ -10,9 +10,10 @@ use kayak_ui::core::{
 use kayak_ui::core::{Binding, Color};
 use kayak_ui::widgets::{Background, Element, If, Image, ImageProps, Text, TextProps};
 
-use super::styles::*;
 use super::generics::*;
+use super::styles::*;
 use crate::assets::ImageAssets;
+use crate::game;
 use crate::state::GameState;
 
 #[widget]
@@ -112,12 +113,13 @@ pub fn Resources() {
     let (r, g, b, a) = COLOR_TEXT;
     let text_color = Style {
         color: StyleProp::Value(Color::new(r / 256., g / 256., b / 256., a)),
+        left: StyleProp::Value(Units::Pixels(10.)),
         ..Default::default()
     };
     rsx! {
-        <Element styles={Some(center_left().with_style(bg_secondary()).with_style(row()))}>
+        <Background styles={Some(center_left().with_style(row()))}>
             <Text size={40.0} content={"Cr$ 5000".to_string()} styles={Some(text_color)} />
-        </Element>
+        </Background>
     }
 }
 
@@ -135,28 +137,41 @@ pub fn ShipsAndPlanetsDetail(props: ShipsAndPlanetsProps) {
         col_between: StyleProp::Value(Units::Pixels(45.)),
         ..Default::default()
     };
-    // context
+
+    let fighters_deployed = {
+        let fighter_count = context.query_world::<Res<Binding<game::resources::FightersDeployed>>, _, _>(move |count| count.clone());
+        context.bind(&fighter_count);
+        fighter_count.get().0
+    };
+    let fighters_stored = {
+        let fighter_count = context.query_world::<Res<Binding<game::resources::FightersStored>>, _, _>(move |count| count.clone());
+        context.bind(&fighter_count);
+        fighter_count.get().0
+    };
     rsx! {
-        <Element styles={Some(ships_nav_bar.with_style(center()).with_style(bg_primary()).with_style(row()))}>
-            <ImageAndTextBox image={props.fighter_img} text={"62".to_string()} />
+        <Background styles={Some(ships_nav_bar.with_style(center()).with_style(row()))}>
+            // BUG: img+text does not reposition and text may overlap for large numbers
+            <ImageAndTextBox image={props.fighter_img} text={format!("{fighters_stored}").to_string()} />
             <ImageAndTextBox image={props.trader_img} text={"9".to_string()} />
             <ImageAndTextBox image={props.dreadn_img} text={"2".to_string()} />
             <ImageAndTextBox image={props.planet_img} text={"30".to_string()} />
-        </Element>
+        </Background>
     }
 }
 
-
-
 #[widget]
 pub fn QuickMenu() {
+    let quickmenu_style = Style {
+        col_between: StyleProp::Value(Units::Pixels(15.)),
+        ..Default::default()
+    };
     rsx! {
-        <Element styles={Some(center_right().with_style(bg_secondary()).with_style(row()))}>
+        <Background styles={Some(quickmenu_style.with_style(center_right()).with_style(row()))}>
             <Text size={20.0} content={"A".to_string()} />
             <Text size={20.0} content={"N".to_string()} />
             <Text size={20.0} content={"S".to_string()} />
             <Text size={20.0} content={"M".to_string()} />
-        </Element>
+        </Background>
     }
 }
 
@@ -164,7 +179,6 @@ pub fn QuickMenu() {
 pub fn IconAndText() {
     rsx! {
         <Element>
-            // <Image styles={Some()} handle={}/>
             <Text size={20.0} content={"5000".to_string()} />
         </Element>
     }

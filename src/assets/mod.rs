@@ -26,5 +26,5 @@ pub struct ImageAssets {
     #[asset(path = "img/Planet2_7.png")]
     pub planet_handle: Handle<Image>,
     #[asset(path = "img/generic-rpg-vendor.png")]
-    pub rpg_vendor: Handle<Image>
+    pub rpg_vendor: Handle<Image>,
 }
