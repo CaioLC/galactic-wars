@@ -1,4 +1,7 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, utils::Uuid};
+
+#[derive(Component)]
+pub struct Ownership(pub Uuid);
 
 #[derive(Component)]
 pub struct Me;
@@ -8,3 +11,9 @@ pub struct Neutral;
 
 #[derive(Component)]
 pub struct Enemy;
+
+pub enum AllegianceStatus {
+    Friend,
+    Neutral,
+    Enemy
+}

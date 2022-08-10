@@ -7,11 +7,11 @@ use bevy::prelude::{App, AssetServer, Commands, Plugin, Res, ResMut};
 use iyes_loopless::state::CurrentState;
 
 use kayak_ui::bevy::{BevyContext, BevyKayakUIPlugin, FontMapping, UICameraBundle};
-use kayak_ui::core::{bind, Binding};
+use kayak_ui::core::{bind, Binding, computed};
 use kayak_ui::core::{render, MutableBound};
 use kayak_ui::widgets::App as KApp;
 
-use crate::game;
+use crate::game::resources;
 use crate::state::{self, GameState};
 use ingame_ui::*;
 use menu_ui::*;
@@ -43,6 +43,16 @@ pub fn bind_gamestate(state: Res<CurrentState<GameState>>, binding: Res<Binding<
         binding.set(state.0.clone());
     }
 }
+pub fn bind_fighter_deployed(state: Res<resources::FightersDeployed>, binding: Res<Binding<resources::FightersDeployed>>) {
+    if state.is_changed() {
+        binding.set(state.clone());
+    }
+}
+pub fn bind_fighter_stored(state: Res<resources::FightersStored>, binding: Res<Binding<resources::FightersStored>>) {
+    if state.is_changed() {
+        binding.set(state.clone());
+    }
+}
 
 pub struct UiPlugin;
 
@@ -50,12 +60,14 @@ impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(BevyKayakUIPlugin)
             .insert_resource(bind(state::STARTING_GAME_STATE))
-            .insert_resource(bind(game::resources::FightersDeployed(0)))
-            .insert_resource(bind(game::resources::FightersStored(0)))
-            .insert_resource(bind(game::resources::TotalTraders(0)))
-            .insert_resource(bind(game::resources::TotalDreadnoughts(0)))
-            .insert_resource(bind(game::resources::TotalPlanets(0)))
+            .insert_resource(bind(resources::FightersDeployed(0)))
+            .insert_resource(bind(resources::FightersStored(0)))
+            .insert_resource(bind(resources::TotalTraders(0)))
+            .insert_resource(bind(resources::TotalDreadnoughts(0)))
+            .insert_resource(bind(resources::TotalPlanets(0)))
             .add_startup_system(ui_startup)
-            .add_system(bind_gamestate);
+            .add_system(bind_gamestate)
+            .add_system(bind_fighter_deployed)
+            .add_system(bind_fighter_stored);
     }
 }

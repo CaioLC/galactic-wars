@@ -7,7 +7,7 @@ use std::time::Duration;
 
 use bevy::{
     prelude::*,
-    render::mesh::{Indices, PrimitiveTopology},
+    render::mesh::{Indices, PrimitiveTopology}, utils::HashMap,
 };
 use bevy_rapier3d::prelude::*;
 use bevy_text_mesh::prelude::*;
@@ -33,6 +33,9 @@ impl Plugin for GamePlugin {
             .insert_resource(resources::TotalTraders(0))
             .insert_resource(resources::TotalDreadnoughts(0))
             .insert_resource(resources::TotalPlanets(0))
+            .insert_resource(resources::PlayersRes(HashMap::new()))
+            .insert_resource(resources::AllegiancesToMe(HashMap::new()))
+            .insert_resource(resources::AllegiancesToOthers(HashMap::new()))
             .add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
             .add_plugin(TextMeshPlugin)
             .add_startup_system(setup)
@@ -60,6 +63,7 @@ impl Plugin for GamePlugin {
                     .with_system(production::count_fighters_deployed)
                     .with_system(production::count_fighters_stored)
                     .with_system(production::count_traders)
+                    .with_system(production::debug)
                     .into(),
             );
 

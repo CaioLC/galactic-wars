@@ -30,6 +30,19 @@ pub fn count_fighters_stored(
     res.set_changed();
 }
 
+pub fn debug(
+    deployed: Res<resources::FightersDeployed>,
+    stored: Res<resources::FightersStored>,
+    kb_input: Res<Input<KeyCode>>,
+){
+    if kb_input.just_pressed(KeyCode::G) {
+        dbg!(deployed.0);
+        dbg!(stored.0);
+        let tot = deployed.0 + stored.0;
+        dbg!(tot);
+    }
+}
+
 pub fn count_traders(
     query: Query<&Trader>,
     mut res: ResMut<resources::TotalTraders>

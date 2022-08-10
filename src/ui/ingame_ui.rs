@@ -148,10 +148,11 @@ pub fn ShipsAndPlanetsDetail(props: ShipsAndPlanetsProps) {
         context.bind(&fighter_count);
         fighter_count.get().0
     };
+    let tot = fighters_deployed + fighters_stored;
     rsx! {
         <Background styles={Some(ships_nav_bar.with_style(center()).with_style(row()))}>
             // BUG: img+text does not reposition and text may overlap for large numbers
-            <ImageAndTextBox image={props.fighter_img} text={format!("{fighters_stored}").to_string()} />
+            <ImageAndTextBox image={props.fighter_img} text={tot.to_string()} />
             <ImageAndTextBox image={props.trader_img} text={"9".to_string()} />
             <ImageAndTextBox image={props.dreadn_img} text={"2".to_string()} />
             <ImageAndTextBox image={props.planet_img} text={"30".to_string()} />
