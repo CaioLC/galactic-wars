@@ -1,7 +1,12 @@
 use bevy::{prelude::*, utils::Uuid};
 
 #[derive(Component)]
-pub struct Ownership(pub Uuid);
+pub struct Ownership(pub Option<Uuid>);
+
+pub struct PlayerDetails {
+    pub name: String,
+    pub color: Handle<StandardMaterial>,
+}
 
 #[derive(Component)]
 pub struct Me;
@@ -15,5 +20,5 @@ pub struct Enemy;
 pub enum AllegianceStatus {
     Friend,
     Neutral,
-    Enemy
+    Enemy,
 }

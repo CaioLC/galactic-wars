@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, utils::Uuid};
 
 // EVENTS
 
@@ -69,3 +69,8 @@ impl Default for Planet {
 pub struct FighterProducer;
 #[derive(Component)]
 pub struct TraderProducer;
+
+pub struct TakeOwnership {
+    pub entity: Entity,
+    pub owner: Uuid,
+}

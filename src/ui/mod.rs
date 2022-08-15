@@ -7,7 +7,7 @@ use bevy::prelude::{App, AssetServer, Commands, Plugin, Res, ResMut};
 use iyes_loopless::state::CurrentState;
 
 use kayak_ui::bevy::{BevyContext, BevyKayakUIPlugin, FontMapping, UICameraBundle};
-use kayak_ui::core::{bind, Binding, computed};
+use kayak_ui::core::{bind, Binding};
 use kayak_ui::core::{render, MutableBound};
 use kayak_ui::widgets::App as KApp;
 
@@ -43,12 +43,18 @@ pub fn bind_gamestate(state: Res<CurrentState<GameState>>, binding: Res<Binding<
         binding.set(state.0.clone());
     }
 }
-pub fn bind_fighter_deployed(state: Res<resources::FightersDeployed>, binding: Res<Binding<resources::FightersDeployed>>) {
+pub fn bind_fighter_deployed(
+    state: Res<resources::FightersDeployed>,
+    binding: Res<Binding<resources::FightersDeployed>>,
+) {
     if state.is_changed() {
         binding.set(state.clone());
     }
 }
-pub fn bind_fighter_stored(state: Res<resources::FightersStored>, binding: Res<Binding<resources::FightersStored>>) {
+pub fn bind_fighter_stored(
+    state: Res<resources::FightersStored>,
+    binding: Res<Binding<resources::FightersStored>>,
+) {
     if state.is_changed() {
         binding.set(state.clone());
     }

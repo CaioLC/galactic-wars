@@ -139,12 +139,18 @@ pub fn ShipsAndPlanetsDetail(props: ShipsAndPlanetsProps) {
     };
 
     let fighters_deployed = {
-        let fighter_count = context.query_world::<Res<Binding<game::resources::FightersDeployed>>, _, _>(move |count| count.clone());
+        let fighter_count = context
+            .query_world::<Res<Binding<game::resources::FightersDeployed>>, _, _>(move |count| {
+                count.clone()
+            });
         context.bind(&fighter_count);
         fighter_count.get().0
     };
     let fighters_stored = {
-        let fighter_count = context.query_world::<Res<Binding<game::resources::FightersStored>>, _, _>(move |count| count.clone());
+        let fighter_count = context
+            .query_world::<Res<Binding<game::resources::FightersStored>>, _, _>(move |count| {
+                count.clone()
+            });
         context.bind(&fighter_count);
         fighter_count.get().0
     };

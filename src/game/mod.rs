@@ -7,12 +7,12 @@ use std::time::Duration;
 
 use bevy::{
     prelude::*,
-    render::mesh::{Indices, PrimitiveTopology}, utils::HashMap,
+    render::mesh::{Indices, PrimitiveTopology},
+    utils::{HashMap, Uuid},
 };
 use bevy_rapier3d::prelude::*;
 use bevy_text_mesh::prelude::*;
 use iyes_loopless::prelude::*;
-
 
 use crate::selection::components::Selectable;
 use crate::state::GameState;
@@ -21,7 +21,10 @@ use components::{characteristics::*, config::*};
 use resources::*;
 use systems::*;
 
-use self::layers_util::{get_z, Layers};
+use self::{
+    components::players::{Ownership, PlayerDetails},
+    layers_util::{get_z, Layers},
+};
 
 pub struct GamePlugin;
 
@@ -36,6 +39,7 @@ impl Plugin for GamePlugin {
             .insert_resource(resources::PlayersRes(HashMap::new()))
             .insert_resource(resources::AllegiancesToMe(HashMap::new()))
             .insert_resource(resources::AllegiancesToOthers(HashMap::new()))
+            .add_event::<TakeOwnership>()
             .add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
             .add_plugin(TextMeshPlugin)
             .add_startup_system(setup)
@@ -51,6 +55,7 @@ impl Plugin for GamePlugin {
                     .with_system(production::fighter_enters_planet)
                     .with_system(production::deploy_fighters)
                     .with_system(production::update_count_mesh)
+                    .with_system(production::take_planet_ownership)
                     .with_system(movement::turn_to_destination)
                     .with_system(movement::move_to_destination)
                     .with_system(movement::set_destination)
@@ -75,73 +80,96 @@ impl Plugin for GamePlugin {
 fn setup(
     asset_server: Res<AssetServer>,
     board_params: Res<BoardParams>,
+    mut players: ResMut<PlayersRes>,
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    for i in 0..board_params.no_of_planets {
-        let transf = Transform::from_xyz(
-            i as f32 * 10.,
-            i as f32 * 10.,
-            layers_util::get_z(Layers::Planets),
-        );
+    players.0.insert(
+        Uuid::new_v4(),
+        PlayerDetails {
+            name: "Caio".to_string(),
+            color: materials
+                .add(StandardMaterial {
+                    base_color: Color::BLUE,
+                    unlit: true,
+                    ..Default::default()
+                })
+                .into(),
+        },
+    );
+    players.0.insert(
+        Uuid::new_v4(),
+        PlayerDetails {
+            name: "Bob".to_string(),
+            color: materials
+                .add(StandardMaterial {
+                    base_color: Color::RED,
+                    unlit: true,
+                    ..Default::default()
+                })
+                .into(),
+        },
+    );
+
+    // Set Player starting planets
+    for (pk, pd) in players.0.iter() {
+        let transf = random_pos();
         spawn_planet(
             &mut commands,
             &mut meshes,
             &mut materials,
-            2.0 * i as f32 + 3.0,
-            transf,
-            Color::GREEN,
             asset_server.load("fonts/ShareTechMono.ttf"),
+            // Planet config
+            5.0,
+            transf,
+            Some(*pk),
+            pd.color.clone(),
+            0.,
         );
     }
 
-    spawn_ship(
-        &mut commands,
-        &mut meshes,
-        &mut materials,
-        ShipType::Trade,
-        Transform::from_xyz(-7., 2., layers_util::get_z(Layers::Ships)),
-        DestinationEnum::None,
-    );
-
-    spawn_ship(
-        &mut commands,
-        &mut meshes,
-        &mut materials,
-        ShipType::Trade,
-        Transform::from_xyz(-7., 10., layers_util::get_z(Layers::Ships)),
-        DestinationEnum::None,
-    );
-
-    spawn_bullet(
-        &mut commands,
-        &mut meshes,
-        &mut materials,
-        Transform::from_xyz(17., 2., layers_util::get_z(Layers::Ships))
-            .with_scale(Vec3::new(0.02, 0.04, 1.)),
-        Color::RED,
-    );
-    spawn_bullet(
-        &mut commands,
-        &mut meshes,
-        &mut materials,
-        Transform::from_xyz(17., 42., layers_util::get_z(Layers::Ships))
-            .with_scale(Vec3::new(0.02, 0.04, 1.)),
-        Color::RED,
-    );
+    // Set other planets
+    let non_player_color = materials.add(StandardMaterial {
+        base_color: Color::GRAY,
+        unlit: true,
+        ..Default::default()
+    });
+    for _ in 0..board_params.no_of_planets {
+        spawn_planet(
+            &mut commands,
+            &mut meshes,
+            &mut materials,
+            asset_server.load("fonts/ShareTechMono.ttf"),
+            // Planet config
+            3.0,
+            random_pos(),
+            None,
+            non_player_color.clone(),
+            20.,
+        );
+    }
 }
 
-// TODO:
+fn random_pos() -> Transform {
+    let z = layers_util::get_z(Layers::Planets);
+    let x = (rand::random::<f32>() - 0.5) * 80.;
+    let y = (rand::random::<f32>() - 0.5) * 80.;
+    dbg!(x, y, z);
+    Transform::from_xyz(x, y, z)
+}
+
 fn spawn_planet(
     commands: &mut Commands,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
+    font: Handle<TextMeshFont>,
     radius: f32,
     transform: Transform,
-    color: Color,
-    font: Handle<TextMeshFont>,
-) {
+    ownership: Option<Uuid>,
+    color: Handle<StandardMaterial>,
+    no_fighters: f32,
+) -> Entity {
     commands
         .spawn_bundle(generate_planet_mesh(
             radius, color, transform, meshes, materials,
@@ -150,10 +178,11 @@ fn spawn_planet(
         .insert(Collider::ball(radius))
         .insert(ActiveEvents::COLLISION_EVENTS)
         .insert(Planet {
-            fighters: 0.,
+            fighters: no_fighters,
             size: radius,
         })
         .insert(Selectable)
+        .insert(Ownership(ownership))
         // ADD TEXT3D OVERLAY WITH BEVY_TEXT_MESH: https://crates.io/crates/bevy_text_mesh
         .with_children(|parent| {
             parent.spawn_bundle(TextMeshBundle {
@@ -174,12 +203,13 @@ fn spawn_planet(
                 transform: Transform::from_xyz(-0.2, -0.5, get_z(Layers::Text)),
                 ..Default::default()
             });
-        });
+        })
+        .id()
 }
 
 fn generate_planet_mesh(
     radius: f32,
-    color: Color,
+    color: Handle<StandardMaterial>,
     transform: Transform,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
@@ -191,11 +221,7 @@ fn generate_planet_mesh(
     PbrBundle {
         mesh: meshes.add(mesh),
         transform,
-        material: materials.add(StandardMaterial {
-            base_color: color,
-            unlit: true,
-            ..default()
-        }),
+        material: color,
         ..default()
     }
 }
@@ -207,6 +233,8 @@ pub fn spawn_ship(
     ship_type: ShipType,
     transform: Transform,
     set_destination: DestinationEnum,
+    player_uuid: &Uuid,
+    player_details: &PlayerDetails,
 ) {
     let entity = commands
         .spawn()
@@ -229,13 +257,19 @@ pub fn spawn_ship(
         })
         .insert(Destination(set_destination))
         .insert(Selectable)
+        .insert(Ownership(Some(*player_uuid)))
         .id();
 
     match ship_type {
         ShipType::Fighter => {
             commands
                 .entity(entity)
-                .insert_bundle(generate_ship_mesh(ship_type, transform, meshes, materials))
+                .insert_bundle(generate_ship_mesh(
+                    ship_type,
+                    transform,
+                    meshes,
+                    player_details,
+                ))
                 .insert(Fighter)
                 .insert(Collider::ball(0.5))
                 .insert(Avoidance {
@@ -247,7 +281,12 @@ pub fn spawn_ship(
         ShipType::Trade => {
             commands
                 .entity(entity)
-                .insert_bundle(generate_ship_mesh(ship_type, transform, meshes, materials))
+                .insert_bundle(generate_ship_mesh(
+                    ship_type,
+                    transform,
+                    meshes,
+                    player_details,
+                ))
                 .insert(Trader)
                 .insert(Collider::ball(0.5))
                 .insert(Avoidance {
@@ -263,7 +302,7 @@ pub fn generate_ship_mesh(
     ship_type: ShipType,
     transform: Transform,
     meshes: &mut ResMut<Assets<Mesh>>,
-    materials: &mut ResMut<Assets<StandardMaterial>>,
+    player_details: &PlayerDetails,
 ) -> MaterialMeshBundle<StandardMaterial> {
     let mesh = match ship_type {
         ShipType::Fighter => ship_fighter_mesh(),
@@ -273,11 +312,7 @@ pub fn generate_ship_mesh(
     PbrBundle {
         mesh: meshes.add(mesh),
         transform,
-        material: materials.add(StandardMaterial {
-            base_color: Color::BLUE,
-            unlit: true,
-            ..default()
-        }),
+        material: player_details.color.clone(),
         ..default()
     }
 }
