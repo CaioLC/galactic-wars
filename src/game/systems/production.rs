@@ -4,7 +4,7 @@ use std::io::Take;
 use crate::camera::MouseWorldPos;
 use crate::game::components::characteristics::*;
 use crate::game::components::players::Ownership;
-use crate::game::layers_util::Layers;
+use crate::game::layers_util::{vec2_to_vec3, Layers};
 use crate::game::resources::PlayersRes;
 use crate::game::{self, layers_util, resources};
 use crate::selection::components::Selected;
@@ -28,19 +28,6 @@ pub fn count_fighters_stored(query: Query<&Planet>, mut res: ResMut<resources::F
     }
     res.0 = stored_fighters as u32;
     res.set_changed();
-}
-
-pub fn debug(
-    deployed: Res<resources::FightersDeployed>,
-    stored: Res<resources::FightersStored>,
-    kb_input: Res<Input<KeyCode>>,
-) {
-    if kb_input.just_pressed(KeyCode::G) {
-        dbg!(deployed.0);
-        dbg!(stored.0);
-        let tot = deployed.0 + stored.0;
-        dbg!(tot);
-    }
 }
 
 pub fn count_traders(query: Query<&Trader>, mut res: ResMut<resources::TotalTraders>) {
@@ -99,14 +86,33 @@ pub fn deploy_fighters(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    mut query: Query<(&mut Planet, &Ownership, &GlobalTransform), With<Selected>>,
+    mut set: ParamSet<(
+        Query<(Entity, &Planet, &Transform)>,
+        Query<(&mut Planet, &Ownership, &GlobalTransform), With<Selected>>,
+    )>,
     players: Res<PlayersRes>,
     mouse: Res<Input<MouseButton>>,
     mouse_pos: Res<MouseWorldPos>,
 ) {
     if mouse.just_pressed(MouseButton::Right) {
-        for (mut planet, owner, transform) in query.iter_mut() {
-            let dest = layers_util::vec2_to_vec3(mouse_pos.0, layers_util::Layers::Ships);
+        let mut find_destination = None;
+        let planet_dest = vec2_to_vec3(mouse_pos.0, Layers::Planets);
+        let ship_dest = vec2_to_vec3(mouse_pos.0, Layers::Ships);
+        for (e, planet, transform) in set.p0().iter() {
+            if planet_dest.distance(transform.translation) < planet.size {
+                find_destination = Some(e);
+                break;
+            }
+        }
+        let dest = match find_destination {
+            Some(e) => DestinationEnum::Planet {
+                planet: e,
+                loc: ship_dest,
+            },
+            None => DestinationEnum::Space(ship_dest),
+        };
+
+        for (mut planet, owner, transform) in set.p1().iter_mut() {
             if let Some(p_uuid) = owner.0 {
                 let player_details = players.0.get(&p_uuid).unwrap();
                 for i in 0..planet.fighters as i32 {
@@ -118,7 +124,7 @@ pub fn deploy_fighters(
                         &mut materials,
                         ShipType::Fighter,
                         ship_pos,
-                        DestinationEnum::Space(dest),
+                        dest.clone(),
                         &p_uuid,
                         player_details,
                     )
