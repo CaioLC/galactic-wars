@@ -10,7 +10,7 @@ pub fn cast_ray(
     query: Query<&Transform, With<Bullet>>,
 ) {
     for transform in query.iter() {
-        if keyboard_input.pressed(KeyCode::Space) {
+        if keyboard_input.pressed(KeyCode::F) {
             // println!("Fire!");
             let ray_pos = transform.translation;
             let ray_dir = transform.up();
@@ -58,7 +58,7 @@ pub fn fire_bullet(
     kb_input: Res<Input<KeyCode>>,
     query: Query<&Transform, With<Fighter>>,
 ) {
-    if kb_input.just_pressed(KeyCode::Space) {
+    if kb_input.just_pressed(KeyCode::F) {
         for transform in query.iter() {
             let mut bullet_transform = transform.clone();
             bullet_transform.translation += transform.up() * 1.5;

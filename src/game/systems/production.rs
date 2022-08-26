@@ -138,8 +138,8 @@ pub fn deploy_fighters(
 fn compute_ship_spawn_position(i: i32, translation: Vec3, size: f32) -> Transform {
     let angle_pos = i as f32 * PI / 80.0;
     // println!("{angle_pos}");
-    let x = translation.x + (size + 1.0) + angle_pos.cos();
-    let y = translation.y + (size + 1.0) * angle_pos.sin();
+    let x = translation.x + (size + 5.0) + angle_pos.cos();
+    let y = translation.y + (size + 5.0) * angle_pos.sin();
     let z = layers_util::get_z(Layers::Ships);
     Transform::from_xyz(x, y, z)
 }

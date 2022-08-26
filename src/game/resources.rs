@@ -1,6 +1,9 @@
-use super::components::players::{AllegianceStatus, PlayerDetails};
+use super::components::{
+    characteristics::DestinationEnum,
+    players::{AllegianceStatus, PlayerDetails},
+};
 use bevy::{
-    prelude::{Handle, StandardMaterial},
+    prelude::{Entity, Handle, StandardMaterial},
     utils::{HashMap, Uuid},
 };
 
@@ -21,6 +24,7 @@ pub struct TotalPlanets(pub u32);
 
 pub struct PlayersRes(pub HashMap<Uuid, PlayerDetails>);
 pub struct PlayersColor(pub HashMap<Uuid, Handle<StandardMaterial>>);
+pub struct MovingFleets(pub HashMap<String, Vec<Entity>>);
 
 // These need to be local
 pub struct AllegiancesToOthers(pub HashMap<String, AllegianceStatus>);

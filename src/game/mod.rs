@@ -39,7 +39,9 @@ impl Plugin for GamePlugin {
             .insert_resource(resources::PlayersRes(HashMap::new()))
             .insert_resource(resources::AllegiancesToMe(HashMap::new()))
             .insert_resource(resources::AllegiancesToOthers(HashMap::new()))
+            .insert_resource(resources::MovingFleets(HashMap::new()))
             .add_event::<TakeOwnership>()
+            .add_event::<ArrivedAtDestination>()
             .add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
             .add_plugin(TextMeshPlugin)
             .add_startup_system(setup)
@@ -59,6 +61,7 @@ impl Plugin for GamePlugin {
                     .with_system(movement::turn_to_destination)
                     .with_system(movement::move_to_destination)
                     .with_system(movement::set_destination)
+                    .with_system(movement::remove_destination)
                     .with_system(movement::damping_shift)
                     .with_system(movement::collision_avoidance)
                     .with_system(combat::cast_ray)
@@ -68,12 +71,15 @@ impl Plugin for GamePlugin {
                     .with_system(production::count_fighters_deployed)
                     .with_system(production::count_fighters_stored)
                     .with_system(production::count_traders)
-                    .with_system(production::debug)
                     .into(),
             );
 
         #[cfg(feature = "debug")]
         app.add_plugin(RapierDebugRenderPlugin::default());
+    }
+
+    fn name(&self) -> &str {
+        std::any::type_name::<Self>()
     }
 }
 
@@ -242,6 +248,8 @@ pub fn spawn_ship(
         .insert(Velocity {
             ..Default::default()
         })
+        .insert(Collider::ball(0.5))
+        .insert(Sensor(true))
         .insert(GravityScale(0.))
         .insert(
             LockedAxes::ROTATION_LOCKED_X
@@ -249,7 +257,7 @@ pub fn spawn_ship(
                 | LockedAxes::TRANSLATION_LOCKED_Z,
         )
         .insert(Damping {
-            linear_damping: 5.0,
+            linear_damping: 3.0,
             ..Default::default()
         })
         .insert(ExternalImpulse {
@@ -258,6 +266,7 @@ pub fn spawn_ship(
         .insert(Destination(set_destination))
         .insert(Selectable)
         .insert(Ownership(Some(*player_uuid)))
+        .insert(Ship)
         .id();
 
     match ship_type {
@@ -271,7 +280,6 @@ pub fn spawn_ship(
                     player_details,
                 ))
                 .insert(Fighter)
-                .insert(Collider::ball(0.5))
                 .insert(Avoidance {
                     impulse: Vec3::ZERO,
                     max_see_ahead: 8.0,
@@ -288,7 +296,6 @@ pub fn spawn_ship(
                     player_details,
                 ))
                 .insert(Trader)
-                .insert(Collider::ball(0.5))
                 .insert(Avoidance {
                     impulse: Vec3::ZERO,
                     max_see_ahead: 4.0,

@@ -1,8 +1,17 @@
 use bevy::{prelude::*, utils::Uuid};
 
 // EVENTS
+pub struct TakeOwnership {
+    pub entity: Entity,
+    pub owner: Uuid,
+}
 
+pub struct ArrivedAtDestination(pub Vec3);
 // COMPONENTS
+
+#[derive(Component)]
+pub struct Ship;
+
 #[derive(Component)]
 pub struct Fighter;
 
@@ -31,6 +40,7 @@ pub struct Avoidance {
 #[derive(Component)]
 pub struct Destination(pub DestinationEnum);
 
+#[derive(Clone)]
 pub enum DestinationEnum {
     None,
     Space(Vec3),
@@ -69,8 +79,3 @@ impl Default for Planet {
 pub struct FighterProducer;
 #[derive(Component)]
 pub struct TraderProducer;
-
-pub struct TakeOwnership {
-    pub entity: Entity,
-    pub owner: Uuid,
-}
