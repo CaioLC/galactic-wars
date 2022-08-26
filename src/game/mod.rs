@@ -241,7 +241,7 @@ pub fn spawn_ship(
     set_destination: DestinationEnum,
     player_uuid: &Uuid,
     player_details: &PlayerDetails,
-) {
+) -> Entity {
     let entity = commands
         .spawn()
         .insert(RigidBody::Dynamic)
@@ -303,6 +303,7 @@ pub fn spawn_ship(
                 .insert(Movement { speed: 12. });
         }
     }
+    entity
 }
 
 pub fn generate_ship_mesh(

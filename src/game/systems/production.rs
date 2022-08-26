@@ -1,11 +1,10 @@
 use std::f32::consts::PI;
-use std::io::Take;
 
 use crate::camera::MouseWorldPos;
 use crate::game::components::characteristics::*;
 use crate::game::components::players::Ownership;
 use crate::game::layers_util::{vec2_to_vec3, Layers};
-use crate::game::resources::PlayersRes;
+use crate::game::resources::{MovingFleets, PlayersRes};
 use crate::game::{self, layers_util, resources};
 use crate::selection::components::Selected;
 use bevy::prelude::*;
@@ -90,6 +89,7 @@ pub fn deploy_fighters(
         Query<(Entity, &Planet, &Transform)>,
         Query<(&mut Planet, &Ownership, &GlobalTransform), With<Selected>>,
     )>,
+    mut fleets_context: ResMut<MovingFleets>,
     players: Res<PlayersRes>,
     mouse: Res<Input<MouseButton>>,
     mouse_pos: Res<MouseWorldPos>,
@@ -112,13 +112,14 @@ pub fn deploy_fighters(
             None => DestinationEnum::Space(ship_dest),
         };
 
+        let mut moving_fleet = Vec::new();
         for (mut planet, owner, transform) in set.p1().iter_mut() {
             if let Some(p_uuid) = owner.0 {
                 let player_details = players.0.get(&p_uuid).unwrap();
                 for i in 0..planet.fighters as i32 {
                     let ship_pos =
                         compute_ship_spawn_position(i, transform.translation, planet.size);
-                    game::spawn_ship(
+                    let entity = game::spawn_ship(
                         &mut commands,
                         &mut meshes,
                         &mut materials,
@@ -127,19 +128,28 @@ pub fn deploy_fighters(
                         dest.clone(),
                         &p_uuid,
                         player_details,
-                    )
+                    );
+                    match dest {
+                        DestinationEnum::Space(_) => {
+                            moving_fleet.push(entity);
+                        }
+                        _ => {}
+                    }
                 }
                 planet.fighters = 0.0;
             }
+        }
+        if !moving_fleet.is_empty() {
+            fleets_context.0.insert(ship_dest.to_string(), moving_fleet);
         }
     }
 }
 
 fn compute_ship_spawn_position(i: i32, translation: Vec3, size: f32) -> Transform {
-    let angle_pos = i as f32 * PI / 80.0;
-    // println!("{angle_pos}");
-    let x = translation.x + (size + 5.0) + angle_pos.cos();
-    let y = translation.y + (size + 5.0) * angle_pos.sin();
+    let angle_pos = i as f32 * (PI / 8. + i as f32);
+    let x = (size + 2.0) * angle_pos.cos() + translation.x;
+
+    let y = (size + 2.0) * angle_pos.sin() + translation.y;
     let z = layers_util::get_z(Layers::Ships);
     Transform::from_xyz(x, y, z)
 }

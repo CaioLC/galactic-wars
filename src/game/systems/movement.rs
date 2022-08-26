@@ -1,11 +1,9 @@
 use bevy::prelude::*;
-use bevy::utils::hashbrown::hash_set;
 use bevy_rapier3d::prelude::*;
 
 use super::super::layers_util::*;
 use crate::camera::MouseWorldPos;
 use crate::game::components::characteristics::*;
-use crate::game::layers_util;
 use crate::game::resources::MovingFleets;
 use crate::selection::components::Selected;
 
@@ -47,7 +45,6 @@ pub fn move_to_destination(
     time: Res<Time>,
     mut query: Query<(
         &mut Destination,
-        // &mut Velocity,
         &mut ExternalImpulse,
         &Avoidance,
         &Transform,
@@ -59,12 +56,10 @@ pub fn move_to_destination(
         match dest.0 {
             DestinationEnum::Space(loc) => {
                 let dist = transform.translation.distance(loc);
-                let accel = 2.0_f32.max(1.5 * dist.min(mov.speed));
+                let accel = 4.0_f32.max(dist.min(mov.speed));
                 if dist < 1.0 {
                     dest.0 = DestinationEnum::None;
                     arrived_ev_writer.send(ArrivedAtDestination(loc));
-                    // impulse.impulse = Vec3::ZERO;
-                    // vel.angvel = Vec3::ZERO;
                 } else {
                     let force =
                         (transform.up() + avoid.impulse).normalize() * accel * time.delta_seconds();
@@ -73,12 +68,17 @@ pub fn move_to_destination(
             }
             DestinationEnum::Planet { planet: _, loc } => {
                 let dist = transform.translation.distance(loc);
-                let accel = 2.0_f32.max(1.5 * dist.min(mov.speed));
+                let accel = 4.0_f32.max(dist.min(mov.speed));
                 let force =
                     (transform.up() + avoid.impulse).normalize() * accel * time.delta_seconds();
                 impulse.impulse = force;
             }
-            DestinationEnum::None => {}
+            DestinationEnum::None => {
+                if avoid.impulse != Vec3::ZERO {
+                    let force = avoid.impulse.normalize() * time.delta_seconds();
+                    impulse.impulse = force;
+                }
+            }
         }
     }
 }
@@ -165,15 +165,6 @@ pub fn collision_avoidance(
     other_ships: Query<(Entity, &Transform), With<Ship>>,
     rapier_context: Res<RapierContext>,
 ) {
-    // NOTE: do we need to avoid planets?
-    // for (entity_p, transform_p, planet) in planets.iter() {
-    //     for (collider1, collider2, intersecting) in rapier_context.intersections_with(entity_p) {
-    //         if intersecting {
-    //             println!("Entity {:?} intersecting with {:?}", collider1, collider2);
-    //         }
-    //     }
-    // }
-
     for (ship_e, mut avoidance, transform) in ships.iter_mut() {
         avoidance.impulse = Vec3::ZERO;
         for (col_1, col_2, intersects) in rapier_context.intersections_with(ship_e) {
@@ -182,15 +173,19 @@ pub fn collision_avoidance(
                     let other_ship = other_ships.get(col_2);
                     if let Ok((_, o_transf)) = other_ship {
                         let dist = o_transf.translation - transform.translation;
-                        let repel = -dist.normalize();
-                        avoidance.impulse = repel;
+                        let repel = dist.try_normalize();
+                        if let Some(r) = repel {
+                            avoidance.impulse = -r
+                        }
                     }
                 } else {
                     let other_ship = other_ships.get(col_1);
                     if let Ok((_, o_transf)) = other_ship {
                         let dist = o_transf.translation - transform.translation;
-                        let repel = -dist.normalize();
-                        avoidance.impulse = repel;
+                        let repel = dist.try_normalize();
+                        if let Some(r) = repel {
+                            avoidance.impulse = -r
+                        }
                     }
                 }
                 break;
