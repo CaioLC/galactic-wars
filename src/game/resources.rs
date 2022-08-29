@@ -1,11 +1,4 @@
-use super::components::{
-    characteristics::DestinationEnum,
-    players::{AllegianceStatus, PlayerDetails},
-};
-use bevy::{
-    prelude::{Entity, Handle, StandardMaterial},
-    utils::{HashMap, Uuid},
-};
+use bevy::{prelude::*, utils::HashMap};
 
 #[derive(Clone, PartialEq)]
 pub struct FightersDeployed(pub u32);
@@ -22,10 +15,11 @@ pub struct TotalDreadnoughts(pub u32);
 #[derive(Clone, PartialEq)]
 pub struct TotalPlanets(pub u32);
 
-pub struct PlayersRes(pub HashMap<Uuid, PlayerDetails>);
-pub struct PlayersColor(pub HashMap<Uuid, Handle<StandardMaterial>>);
 pub struct MovingFleets(pub HashMap<String, Vec<Entity>>);
 
-// These need to be local
-pub struct AllegiancesToOthers(pub HashMap<String, AllegianceStatus>);
-pub struct AllegiancesToMe(pub HashMap<String, AllegianceStatus>);
+pub struct GameStatus(pub GameStatusEnum);
+pub enum GameStatusEnum {
+    Uninitialized,
+    Started(u64),
+    Finished,
+}

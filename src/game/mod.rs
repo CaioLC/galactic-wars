@@ -14,6 +14,10 @@ use bevy_rapier3d::prelude::*;
 use bevy_text_mesh::prelude::*;
 use iyes_loopless::prelude::*;
 
+use crate::player_mngmt::{
+    components::{Ownership, PlayerDetails},
+    resources::RegisteredPlayers,
+};
 use crate::selection::components::Selectable;
 use crate::state::GameState;
 
@@ -21,25 +25,19 @@ use components::{characteristics::*, config::*};
 use resources::*;
 use systems::*;
 
-use self::{
-    components::players::{Ownership, PlayerDetails},
-    layers_util::{get_z, Layers},
-};
+use self::layers_util::{get_z, Layers};
 
 pub struct GamePlugin;
 
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugin(ConfigPlugin)
-            .insert_resource(resources::FightersDeployed(0))
+        app.insert_resource(resources::FightersDeployed(0))
             .insert_resource(resources::FightersStored(0))
             .insert_resource(resources::TotalTraders(0))
             .insert_resource(resources::TotalDreadnoughts(0))
             .insert_resource(resources::TotalPlanets(0))
-            .insert_resource(resources::PlayersRes(HashMap::new()))
-            .insert_resource(resources::AllegiancesToMe(HashMap::new()))
-            .insert_resource(resources::AllegiancesToOthers(HashMap::new()))
             .insert_resource(resources::MovingFleets(HashMap::new()))
+            .insert_resource(resources::GameStatus(GameStatusEnum::Uninitialized))
             .add_event::<TakeOwnership>()
             .add_event::<ArrivedAtDestination>()
             .add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
@@ -85,39 +83,12 @@ impl Plugin for GamePlugin {
 
 fn setup(
     asset_server: Res<AssetServer>,
-    board_params: Res<BoardParams>,
-    mut players: ResMut<PlayersRes>,
+    board_params: Res<InitGameSetup>,
+    players: Res<RegisteredPlayers>,
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    players.0.insert(
-        Uuid::new_v4(),
-        PlayerDetails {
-            name: "Caio".to_string(),
-            color: materials
-                .add(StandardMaterial {
-                    base_color: Color::BLUE,
-                    unlit: true,
-                    ..Default::default()
-                })
-                .into(),
-        },
-    );
-    players.0.insert(
-        Uuid::new_v4(),
-        PlayerDetails {
-            name: "Bob".to_string(),
-            color: materials
-                .add(StandardMaterial {
-                    base_color: Color::RED,
-                    unlit: true,
-                    ..Default::default()
-                })
-                .into(),
-        },
-    );
-
     // Set Player starting planets
     for (pk, pd) in players.0.iter() {
         let transf = random_pos();

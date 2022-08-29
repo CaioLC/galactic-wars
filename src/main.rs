@@ -2,6 +2,7 @@ pub mod assets;
 pub mod camera;
 pub mod game;
 pub mod math_util;
+pub mod player_mngmt;
 pub mod selection;
 pub mod state;
 pub mod ui;
@@ -11,12 +12,13 @@ use bevy::{diagnostic::FrameTimeDiagnosticsPlugin, prelude::*};
 #[cfg(feature = "debug")]
 use bevy_inspector_egui::{InspectorPlugin, RegisterInspectable, WorldInspectorPlugin};
 
-pub use assets::AssetsPlugin;
-pub use camera::CameraPlugin;
-pub use game::GamePlugin;
-pub use selection::SelectionPlugin;
-pub use state::StatePlugin;
-pub use ui::UiPlugin;
+use assets::AssetsPlugin;
+use camera::CameraPlugin;
+use game::GamePlugin;
+use player_mngmt::PlayerManagementPlugin;
+use selection::SelectionPlugin;
+use state::StatePlugin;
+use ui::UiPlugin;
 
 fn main() {
     let mut app = App::new();
@@ -32,6 +34,8 @@ fn main() {
     .add_plugin(CameraPlugin)
     .add_plugin(StatePlugin)
     .add_plugin(SelectionPlugin)
+    .add_plugin(game::components::config::ConfigPlugin) // TODO: get config out of game
+    .add_plugin(PlayerManagementPlugin)
     .add_plugin(GamePlugin)
     .add_plugin(AssetsPlugin)
     .add_plugin(UiPlugin);

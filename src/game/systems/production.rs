@@ -2,10 +2,10 @@ use std::f32::consts::PI;
 
 use crate::camera::MouseWorldPos;
 use crate::game::components::characteristics::*;
-use crate::game::components::players::Ownership;
 use crate::game::layers_util::{vec2_to_vec3, Layers};
-use crate::game::resources::{MovingFleets, PlayersRes};
 use crate::game::{self, layers_util, resources};
+use crate::player_mngmt::components::Ownership;
+use crate::player_mngmt::resources::RegisteredPlayers;
 use crate::selection::components::Selected;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
@@ -89,8 +89,8 @@ pub fn deploy_fighters(
         Query<(Entity, &Planet, &Transform)>,
         Query<(&mut Planet, &Ownership, &GlobalTransform), With<Selected>>,
     )>,
-    mut fleets_context: ResMut<MovingFleets>,
-    players: Res<PlayersRes>,
+    mut fleets_context: ResMut<resources::MovingFleets>,
+    players: Res<RegisteredPlayers>,
     mouse: Res<Input<MouseButton>>,
     mouse_pos: Res<MouseWorldPos>,
 ) {
@@ -169,7 +169,7 @@ pub fn update_count_mesh(mut q_child: Query<(&Parent, &mut TextMesh)>, q_parent:
 
 pub fn take_planet_ownership(
     mut ev_reader: EventReader<TakeOwnership>,
-    players: Res<PlayersRes>,
+    players: Res<RegisteredPlayers>,
     mut query: Query<(With<Planet>, &mut Ownership, &mut Handle<StandardMaterial>)>,
 ) {
     for event in ev_reader.iter() {
