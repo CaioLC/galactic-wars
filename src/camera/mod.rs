@@ -1,7 +1,9 @@
 mod components;
 mod systems;
 
+use bevy::core_pipeline::clear_color::ClearColorConfig;
 pub use bevy::prelude::*;
+pub use bevy::render::camera::ScalingMode;
 pub use components::*;
 pub use systems::*;
 
@@ -18,13 +20,21 @@ impl Plugin for CameraPlugin {
 
 fn camera_setup(mut commands: Commands) {
     commands
-        .spawn_bundle(OrthographicCameraBundle {
-            transform: Transform::from_xyz(0.0, 0.0, 8.0).looking_at(Vec3::default(), Vec3::Y),
-            orthographic_projection: OrthographicProjection {
-                scale: 0.05,
+        .spawn_bundle(Camera3dBundle {
+            projection: OrthographicProjection {
+                scale: 3.0,
+                scaling_mode: ScalingMode::FixedVertical(5.0),
                 ..default()
-            },
-            ..OrthographicCameraBundle::new_3d()
+            }
+            .into(),
+            // camera_3d: {
+            //     Camera3d {
+            //         clear_color: ClearColorConfig::Custom(Color::FUCHSIA),
+            //         ..default()
+            //     }
+            // },
+            transform: { Transform::from_xyz(0., 0., 50.) },
+            ..default()
         })
         .insert(MainCamera);
 }

@@ -118,7 +118,7 @@ pub fn deploy_fighters(
                 let player_details = players.0.get(&p_uuid).unwrap();
                 for i in 0..planet.fighters as i32 {
                     let ship_pos =
-                        compute_ship_spawn_position(i, transform.translation, planet.size);
+                        compute_ship_spawn_position(i, transform.translation(), planet.size);
                     let entity = game::spawn_ship(
                         &mut commands,
                         &mut meshes,
@@ -157,7 +157,7 @@ fn compute_ship_spawn_position(i: i32, translation: Vec3, size: f32) -> Transfor
 pub fn update_count_mesh(mut q_child: Query<(&Parent, &mut TextMesh)>, q_parent: Query<&Planet>) {
     // TODO: CHECK IF QUERYING ALL TEXTMESHES IS OK OR WE NEED TO ADD A COMPONENT TO LIMIT FILTER.
     for (parent, mut text_mesh) in q_child.iter_mut() {
-        let parent_planet = q_parent.get(parent.0);
+        let parent_planet = q_parent.get(**parent);
         if let Ok(planet) = parent_planet {
             let updated_text = format!("{}", planet.fighters);
             if text_mesh.text != updated_text {

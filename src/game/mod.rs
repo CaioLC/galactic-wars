@@ -219,8 +219,8 @@ pub fn spawn_ship(
         .insert(Velocity {
             ..Default::default()
         })
+        .insert(Sensor)
         .insert(Collider::ball(0.5))
-        .insert(Sensor(true))
         .insert(GravityScale(0.))
         .insert(
             LockedAxes::ROTATION_LOCKED_X

@@ -16,6 +16,7 @@ pub fn camera_system(
     let scale: f32 = transf.scale.x;
     if keyboard_input.pressed(KeyCode::A) {
         direction -= Vec3::new(1.0, 0.0, 0.0);
+        dbg!("'A' pressed");
     }
 
     if keyboard_input.pressed(KeyCode::D) {
@@ -69,7 +70,7 @@ fn cursor_to_world(
 
     let screen_size = Vec2::new(window.width() as f32, window.height() as f32);
     let camera_position = transform.compute_matrix();
-    let projection_matrix = camera.projection_matrix;
+    let projection_matrix = camera.projection_matrix();
 
     // Normalized device coordinate cursor position from (-1, -1, -1) to (1, 1, 1)
     let cursor_ndc = (cursor / screen_size) * 2.0 - Vec2::from([1.0, 1.0]);

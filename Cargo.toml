@@ -10,11 +10,11 @@ debug = [ "bevy-inspector-egui" ]
 
 [dependencies]
 # bevy = { version = "0.7", features = ["dynamic"]}
-bevy = { version = "0.7"} # feature dynamic should be disabled before release.
-bevy-inspector-egui = { version = "0.10", optional = true }
-bevy_text_mesh = "0.2.0"
-bevy_asset_loader = {version = "0.11", features = ["stageless", "progress_tracking"]}
-bevy_rapier3d = { version = "0.14.1", features = ["debug-render","simd-stable", "wasm-bindgen"]}
-kayak_ui = { git="https://github.com/StarArawn/kayak_ui", rev="e7fc09a00ac7e7e39100e0084b528b117545cbfa", features = ["bevy_renderer"] }
-iyes_loopless = { version = "0.6" }
+bevy = { version = "0.8"} # feature dynamic should be disabled before release.
+bevy-inspector-egui = { version = "0.12", optional = true }
+bevy_text_mesh = "0.3.0"
+bevy_asset_loader = {version = "0.12", features = ["stageless", "progress_tracking"]}
+bevy_rapier3d = { version = "0.16.2", features = ["debug-render","simd-stable", "wasm-bindgen"]}
+kayak_ui = { git="https://github.com/StarArawn/kayak_ui", rev="108affb36101e0c06fd9a28aa80224323365227d", features = ["bevy_renderer"] }
+iyes_loopless = { version = "0.7" }
 rand = { version = "0.8" }

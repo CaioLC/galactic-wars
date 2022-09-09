@@ -1,4 +1,4 @@
-use bevy::ecs::system::QuerySingleError;
+use bevy::ecs::query::QuerySingleError;
 use bevy::prelude::*;
 use bevy::render::mesh::{Indices, PrimitiveTopology};
 

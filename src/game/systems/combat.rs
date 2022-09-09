@@ -17,16 +17,16 @@ pub fn cast_ray(
             let max_toi = 0.5;
             let solid = true;
             let groups = InteractionGroups::all();
-            let filter = None;
-            if let Some((entity, toi)) =
-                rapier_context.cast_ray(ray_pos, ray_dir, max_toi, solid, groups, filter)
-            {
-                // TODO: manage collision event
-                // The first collider hit has the entity `entity` and it hit after
-                // the ray travelled a distance equal to `ray_dir * toi`.
-                let hit_point = ray_pos + ray_dir * toi;
-                // println!("Entity {:?} hit at point {}", entity, hit_point);
-            }
+            // let filter = None;
+            // if let Some((entity, toi)) =
+            //     rapier_context.cast_ray(ray_pos, ray_dir, max_toi, solid, groups, filter)
+            // {
+            //     // TODO: manage collision event
+            //     // The first collider hit has the entity `entity` and it hit after
+            //     // the ray travelled a distance equal to `ray_dir * toi`.
+            //     let hit_point = ray_pos + ray_dir * toi;
+            //     // println!("Entity {:?} hit at point {}", entity, hit_point);
+            // }
         }
     }
 
@@ -78,14 +78,5 @@ pub fn despawn_bullet(mut commands: Commands, query: Query<(Entity, &Bullet, &Tr
         if transform.translation.distance(bullet.origin) > bullet.distance {
             commands.entity(e).despawn_recursive();
         }
-    }
-}
-
-fn take_planet_ownership(commands: &mut Commands, entity: Option<Entity>) {
-    match entity {
-        Some(e) => {
-            let this_entity = commands.entity(e).id();
-        }
-        None => (),
     }
 }
