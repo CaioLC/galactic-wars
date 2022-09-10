@@ -2,7 +2,6 @@ pub mod assets;
 pub mod camera;
 pub mod game;
 pub mod math_util;
-pub mod player_mngmt;
 pub mod selection;
 pub mod state;
 pub mod ui;
@@ -15,7 +14,6 @@ use bevy_inspector_egui::{InspectorPlugin, RegisterInspectable, WorldInspectorPl
 use assets::AssetsPlugin;
 use camera::CameraPlugin;
 use game::GamePlugin;
-use player_mngmt::PlayerManagementPlugin;
 use selection::SelectionPlugin;
 use state::StatePlugin;
 use ui::UiPlugin;
@@ -28,14 +26,12 @@ fn main() {
         height: 600.,
         ..Default::default()
     })
-    .insert_resource(Msaa { samples: 4 })
     .add_plugins(DefaultPlugins)
+    .insert_resource(Msaa { samples: 4 })
     .add_plugin(FrameTimeDiagnosticsPlugin::default())
-    .add_plugin(PlayerManagementPlugin)
     .add_plugin(CameraPlugin)
     .add_plugin(StatePlugin)
     .add_plugin(SelectionPlugin)
-    .add_plugin(game::components::config::ConfigPlugin) // TODO: get config out of game
     .add_plugin(GamePlugin)
     .add_plugin(AssetsPlugin)
     .add_plugin(UiPlugin);

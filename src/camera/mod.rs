@@ -1,7 +1,6 @@
 mod components;
 mod systems;
 
-use bevy::core_pipeline::clear_color::ClearColorConfig;
 pub use bevy::prelude::*;
 pub use bevy::render::camera::ScalingMode;
 pub use components::*;

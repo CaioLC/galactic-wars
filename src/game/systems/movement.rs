@@ -1,10 +1,10 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 
-use super::super::layers_util::*;
+use super::super::utils::layers_util::*;
 use crate::camera::MouseWorldPos;
 use crate::game::components::characteristics::*;
-use crate::game::resources::MovingFleets;
+use crate::game::resources::game_obj_res::MovingFleets;
 use crate::selection::components::Selected;
 
 use crate::math_util;

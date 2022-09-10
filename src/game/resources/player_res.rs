@@ -1,4 +1,4 @@
-use super::components::{AllegianceStatus, PlayerDetails};
+use super::super::components::players::*;
 use bevy::{
     prelude::*,
     utils::{HashMap, Uuid},

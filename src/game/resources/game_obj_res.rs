@@ -16,10 +16,3 @@ pub struct TotalDreadnoughts(pub u32);
 pub struct TotalPlanets(pub u32);
 
 pub struct MovingFleets(pub HashMap<String, Vec<Entity>>);
-
-pub struct GameStatus(pub GameStatusEnum);
-pub enum GameStatusEnum {
-    Uninitialized,
-    Started(u64),
-    Finished,
-}

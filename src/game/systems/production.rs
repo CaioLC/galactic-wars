@@ -1,26 +1,25 @@
 use std::f32::consts::PI;
 
 use crate::camera::MouseWorldPos;
-use crate::game::components::characteristics::*;
-use crate::game::layers_util::{vec2_to_vec3, Layers};
-use crate::game::{self, layers_util, resources};
-use crate::player_mngmt::components::Ownership;
-use crate::player_mngmt::resources::RegisteredPlayers;
+use crate::game::components::{characteristics::*, players::Ownership};
+use crate::game::utils::layers_util::{vec2_to_vec3, Layers};
+use crate::game::{
+    self,
+    resources::{game_obj_res::*, player_res},
+    utils::layers_util,
+};
 use crate::selection::components::Selected;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use bevy_text_mesh::prelude::*;
 
-pub fn count_fighters_deployed(
-    query: Query<&Fighter>,
-    mut res: ResMut<resources::FightersDeployed>,
-) {
+pub fn count_fighters_deployed(query: Query<&Fighter>, mut res: ResMut<FightersDeployed>) {
     let deployed_fighters = query.iter().count() as u32;
     res.0 = deployed_fighters;
     res.set_changed();
 }
 
-pub fn count_fighters_stored(query: Query<&Planet>, mut res: ResMut<resources::FightersStored>) {
+pub fn count_fighters_stored(query: Query<&Planet>, mut res: ResMut<FightersStored>) {
     let mut stored_fighters = 0.;
     for p in query.iter() {
         stored_fighters += p.fighters;
@@ -29,7 +28,7 @@ pub fn count_fighters_stored(query: Query<&Planet>, mut res: ResMut<resources::F
     res.set_changed();
 }
 
-pub fn count_traders(query: Query<&Trader>, mut res: ResMut<resources::TotalTraders>) {
+pub fn count_traders(query: Query<&Trader>, mut res: ResMut<TotalTraders>) {
     res.0 = query.iter().count() as u32;
 }
 
@@ -84,13 +83,12 @@ pub fn fighter_enters_planet(
 pub fn deploy_fighters(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
     mut set: ParamSet<(
         Query<(Entity, &Planet, &Transform)>,
         Query<(&mut Planet, &Ownership, &GlobalTransform), With<Selected>>,
     )>,
-    mut fleets_context: ResMut<resources::MovingFleets>,
-    players: Res<RegisteredPlayers>,
+    mut fleets_context: ResMut<MovingFleets>,
+    players: Res<player_res::RegisteredPlayers>,
     mouse: Res<Input<MouseButton>>,
     mouse_pos: Res<MouseWorldPos>,
 ) {
@@ -122,7 +120,6 @@ pub fn deploy_fighters(
                     let entity = game::spawn_ship(
                         &mut commands,
                         &mut meshes,
-                        &mut materials,
                         ShipType::Fighter,
                         ship_pos,
                         dest.clone(),
@@ -169,7 +166,7 @@ pub fn update_count_mesh(mut q_child: Query<(&Parent, &mut TextMesh)>, q_parent:
 
 pub fn take_planet_ownership(
     mut ev_reader: EventReader<TakeOwnership>,
-    players: Res<RegisteredPlayers>,
+    players: Res<player_res::RegisteredPlayers>,
     mut query: Query<(With<Planet>, &mut Ownership, &mut Handle<StandardMaterial>)>,
 ) {
     for event in ev_reader.iter() {

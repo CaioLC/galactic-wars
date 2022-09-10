@@ -1,8 +1,5 @@
 use crate::assets::ImageAssets;
-use bevy::{
-    ecs::world,
-    prelude::{Res, World},
-};
+use bevy::prelude::{Res, World};
 use kayak_ui::{
     bevy::ImageManager,
     core::{

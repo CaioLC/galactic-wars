@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use bevy::render::mesh::{Indices, PrimitiveTopology};
 
 use crate::camera::MouseWorldPos;
-use crate::game::layers_util;
+use crate::game::utils::layers_util;
 
 use super::components::*;
 // TODO: selection hotkeys: to select all ships / all planets / all ships of specific type

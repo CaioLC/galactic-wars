@@ -1,64 +1,65 @@
-use crate::game::{self, components::*};
+use crate::game::{
+    components::{characteristics::Ship, players::*, *},
+    obj::spawn_bullet,
+    resources::player_res::RegisteredPlayers,
+};
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-use characteristics::{Bullet, Fighter, Trader};
+use characteristics::{Bullet, Fighter};
 
 pub fn bullet_hit(
-    // mut ships: Query<(Entity, &Transform)>,
-    // other_ships: Query<(Entity, &Transform), With<Bullet>>,
+    mut commands: Commands,
+    bullets: Query<(Entity, &Ownership), With<Bullet>>,
+    ships: Query<(Entity, &Ownership), With<Ship>>,
     rapier_context: Res<RapierContext>,
 ) {
     for (e_1, e_2, intersects) in rapier_context.intersection_pairs() {
         if intersects {
-            println!("{:?}, {:?}", e_1, e_2);
+            let bullet_e1 = bullets.get(e_1);
+            let bullet_e2 = bullets.get(e_2);
+            let ship_e1 = ships.get(e_1);
+            let ship_e2 = ships.get(e_2);
+            if let Ok((b, b_owner)) = bullet_e1 {
+                if let Ok((s, s_owner)) = ship_e2 {
+                    if b_owner.0 != s_owner.0 {
+                        commands.entity(b).despawn_recursive();
+                        commands.entity(s).despawn_recursive();
+                    }
+                }
+            }
+            if let Ok((b, b_owner)) = bullet_e2 {
+                if let Ok((s, s_owner)) = ship_e1 {
+                    if b_owner.0 != s_owner.0 {
+                        commands.entity(b).despawn_recursive();
+                        commands.entity(s).despawn_recursive();
+                    }
+                }
+            }
         }
     }
-    // for (ship_e, mut avoidance, transform) in ships.iter_mut() {
-    //     avoidance.impulse = Vec3::ZERO;
-    //     for (col_1, col_2, intersects) in rapier_context.intersections_with(ship_e) {
-    //         if intersects {
-    //             if ship_e == col_1 {
-    //                 let other_ship = other_ships.get(col_2);
-    //                 if let Ok((_, o_transf)) = other_ship {
-    //                     let dist = o_transf.translation - transform.translation;
-    //                     let repel = dist.try_normalize();
-    //                     if let Some(r) = repel {
-    //                         avoidance.impulse = -r
-    //                     }
-    //                 }
-    //             } else {
-    //                 let other_ship = other_ships.get(col_1);
-    //                 if let Ok((_, o_transf)) = other_ship {
-    //                     let dist = o_transf.translation - transform.translation;
-    //                     let repel = dist.try_normalize();
-    //                     if let Some(r) = repel {
-    //                         avoidance.impulse = -r
-    //                     }
-    //                 }
-    //             }
-    //             break;
-    //         }
-    //     }
-    // }
 }
 
 pub fn fire_bullet(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
+    players: Res<RegisteredPlayers>,
     kb_input: Res<Input<KeyCode>>,
-    query: Query<&Transform, With<Fighter>>,
+    query: Query<(&Transform, &Ownership), With<Fighter>>,
 ) {
     if kb_input.just_pressed(KeyCode::F) {
-        for transform in query.iter() {
+        for (transform, owner) in query.iter() {
             let mut bullet_transform = transform.clone();
             bullet_transform.translation += transform.up() * 1.5;
-            game::spawn_bullet(
+            let owner_details = players
+                .0
+                .get(&owner.0.expect("ship with no owner attempted fire"))
+                .expect("failed to get details for ship owner");
+            spawn_bullet(
                 &mut commands,
                 &mut meshes,
-                &mut materials,
+                &owner.0.unwrap(),
+                &owner_details,
                 bullet_transform.with_scale(Vec3::new(0.02, 0.04, 1.)),
-                Color::RED,
             );
         }
     }

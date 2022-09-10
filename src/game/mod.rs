@@ -1,43 +1,51 @@
 pub mod components;
-pub mod layers_util;
+pub mod obj;
 pub mod resources;
 mod systems;
+pub mod utils;
 
 use std::time::Duration;
 
 use bevy::{
     prelude::*,
-    render::mesh::{Indices, PrimitiveTopology},
     utils::{HashMap, Uuid},
 };
 use bevy_rapier3d::prelude::*;
 use bevy_text_mesh::prelude::*;
 use iyes_loopless::prelude::*;
 
-use crate::player_mngmt::{
-    components::{Ownership, PlayerDetails},
-    resources::RegisteredPlayers,
-};
-use crate::selection::components::Selectable;
 use crate::state::GameState;
 
-use components::{characteristics::*, config::*};
-use resources::*;
+use components::{
+    characteristics::*,
+    config::*,
+    players::{AllegianceStatus, PlayerDetails},
+};
+use obj::{spawn_planet, spawn_ship};
+use resources::{game_obj_res::*, game_status_res::*, player_res::*};
 use systems::*;
 
-use self::layers_util::{get_z, Layers};
+use self::{
+    components::config,
+    utils::layers_util::{get_z, Layers},
+};
 
 pub struct GamePlugin;
 
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(resources::FightersDeployed(0))
-            .insert_resource(resources::FightersStored(0))
-            .insert_resource(resources::TotalTraders(0))
-            .insert_resource(resources::TotalDreadnoughts(0))
-            .insert_resource(resources::TotalPlanets(0))
-            .insert_resource(resources::MovingFleets(HashMap::new()))
-            .insert_resource(resources::GameStatus(GameStatusEnum::Uninitialized))
+        app
+            .add_plugin(config::ConfigPlugin)
+            .insert_resource(FightersDeployed(0))
+            .insert_resource(FightersStored(0))
+            .insert_resource(TotalTraders(0))
+            .insert_resource(TotalDreadnoughts(0))
+            .insert_resource(TotalPlanets(0))
+            .insert_resource(MovingFleets(HashMap::new()))
+            .insert_resource(GameStatus(GameStatusEnum::Uninitialized))
+            .insert_resource(RegisteredPlayers(HashMap::new()))
+            .insert_resource(AllegiancesToOthers(HashMap::new()))
+            .insert_resource(PlayerMoney(HashMap::new()))
             .add_event::<TakeOwnership>()
             .add_event::<ArrivedAtDestination>()
             .add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
@@ -46,7 +54,7 @@ impl Plugin for GamePlugin {
             .add_stage_before(
                 CoreStage::Update,
                 "fighter_producer_tick",
-                FixedTimestepStage::new(Duration::from_secs_f32(5.)) //TODO: this should be configurable
+                FixedTimestepStage::new(Duration::from_secs_f32(2.0)) //TODO: this should be configurable
                     .with_stage(SystemStage::parallel().with_system(production::production_tick)),
             )
             .add_system_set(
@@ -80,11 +88,23 @@ impl Plugin for GamePlugin {
 fn setup(
     asset_server: Res<AssetServer>,
     board_params: Res<InitGameSetup>,
-    players: Res<RegisteredPlayers>,
+    mut players: ResMut<RegisteredPlayers>,
+    mut game_status: ResMut<GameStatus>,
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    mut money: ResMut<PlayerMoney>,
+    mut allegiances_to_others: ResMut<AllegiancesToOthers>,
 ) {
+    // setup players
+    setup_players(
+        &board_params,
+        &mut players,
+        &mut money,
+        &mut materials,
+        &mut allegiances_to_others,
+    );
+
     // Set Player starting planets
     for (pk, pd) in players.0.iter() {
         let transf = random_pos();
@@ -122,275 +142,93 @@ fn setup(
             20.,
         );
     }
+
+    let seed = 3552441;
+    game_status.0 = GameStatusEnum::Started(seed);
+}
+
+fn setup_players(
+    board_params: &Res<InitGameSetup>,
+    players: &mut ResMut<RegisteredPlayers>,
+    money: &mut ResMut<PlayerMoney>,
+    materials: &mut ResMut<Assets<StandardMaterial>>,
+    allegiances_to_others: &mut ResMut<AllegiancesToOthers>,
+) {
+    register_players(players, materials);
+    let me = who_am_i("Caio", &players.0).expect("Could not find player"); // TODO: this won't work in real life.
+    setup_initial_resources(money, board_params.starting_resources, &players.0);
+    setup_allegiances(me, &players.0, allegiances_to_others);
+}
+
+fn who_am_i(name: &str, players_map: &HashMap<Uuid, PlayerDetails>) -> Option<Uuid> {
+    for (k, v) in players_map.into_iter() {
+        if name.to_string() == v.name {
+            return Some(*k);
+        }
+    }
+    None
+}
+
+fn setup_allegiances(
+    me: Uuid,
+    players_map: &HashMap<Uuid, PlayerDetails>,
+    allegiances_to_others: &mut ResMut<AllegiancesToOthers>,
+) {
+    for (k, _) in players_map.into_iter() {
+        if *k != me {
+            allegiances_to_others
+                .0
+                .insert(*k, AllegianceStatus::Neutral);
+        }
+    }
+}
+
+fn setup_initial_resources(
+    money_res: &mut ResMut<PlayerMoney>,
+    start_amount: u32,
+    players_map: &HashMap<Uuid, PlayerDetails>,
+) {
+    for (k, _) in players_map.into_iter() {
+        money_res.0.insert(*k, start_amount);
+    }
+}
+
+fn register_players(
+    players: &mut ResMut<RegisteredPlayers>,
+    materials: &mut ResMut<Assets<StandardMaterial>>,
+) {
+    players.0.insert(
+        Uuid::new_v4(),
+        PlayerDetails {
+            name: "Caio".to_string(),
+            color: materials
+                .add(StandardMaterial {
+                    base_color: Color::BLUE,
+                    unlit: true,
+                    ..Default::default()
+                })
+                .into(),
+        },
+    );
+    players.0.insert(
+        Uuid::new_v4(),
+        PlayerDetails {
+            name: "Bob".to_string(),
+            color: materials
+                .add(StandardMaterial {
+                    base_color: Color::RED,
+                    unlit: true,
+                    ..Default::default()
+                })
+                .into(),
+        },
+    );
 }
 
 fn random_pos() -> Transform {
-    let z = layers_util::get_z(Layers::Planets);
+    let z = get_z(Layers::Planets);
     let x = (rand::random::<f32>() - 0.5) * 80.;
     let y = (rand::random::<f32>() - 0.5) * 80.;
     dbg!(x, y, z);
     Transform::from_xyz(x, y, z)
-}
-
-fn spawn_planet(
-    commands: &mut Commands,
-    meshes: &mut ResMut<Assets<Mesh>>,
-    materials: &mut ResMut<Assets<StandardMaterial>>,
-    font: Handle<TextMeshFont>,
-    radius: f32,
-    transform: Transform,
-    ownership: Option<Uuid>,
-    color: Handle<StandardMaterial>,
-    no_fighters: f32,
-) -> Entity {
-    commands
-        .spawn_bundle(generate_planet_mesh(
-            radius, color, transform, meshes, materials,
-        ))
-        .insert(RigidBody::Fixed)
-        .insert(Collider::ball(radius))
-        .insert(ActiveEvents::COLLISION_EVENTS)
-        .insert(Planet {
-            fighters: no_fighters,
-            size: radius,
-        })
-        .insert(Selectable)
-        .insert(Ownership(ownership))
-        // ADD TEXT3D OVERLAY WITH BEVY_TEXT_MESH: https://crates.io/crates/bevy_text_mesh
-        .with_children(|parent| {
-            parent.spawn_bundle(TextMeshBundle {
-                text_mesh: TextMesh {
-                    text: String::from("0"),
-                    style: TextMeshStyle {
-                        font,
-                        font_size: SizeUnit::NonStandard(70.),
-                        color: Color::rgb(0.1, 0.2, 0.1),
-                        mesh_quality: Quality::Custom(128),
-                        ..Default::default()
-                    },
-                    size: TextMeshSize {
-                        ..Default::default()
-                    },
-                    ..Default::default()
-                },
-                transform: Transform::from_xyz(-0.2, -0.5, get_z(Layers::Text)),
-                ..Default::default()
-            });
-        })
-        .id()
-}
-
-fn generate_planet_mesh(
-    radius: f32,
-    color: Handle<StandardMaterial>,
-    transform: Transform,
-    meshes: &mut ResMut<Assets<Mesh>>,
-    materials: &mut ResMut<Assets<StandardMaterial>>,
-) -> MaterialMeshBundle<StandardMaterial> {
-    let mesh = Mesh::from(shape::Icosphere {
-        radius,
-        subdivisions: 16,
-    });
-    PbrBundle {
-        mesh: meshes.add(mesh),
-        transform,
-        material: color,
-        ..default()
-    }
-}
-
-pub fn spawn_ship(
-    commands: &mut Commands,
-    meshes: &mut ResMut<Assets<Mesh>>,
-    materials: &mut ResMut<Assets<StandardMaterial>>,
-    ship_type: ShipType,
-    transform: Transform,
-    set_destination: DestinationEnum,
-    player_uuid: &Uuid,
-    player_details: &PlayerDetails,
-) -> Entity {
-    let entity = commands
-        .spawn()
-        .insert(RigidBody::Dynamic)
-        .insert(Velocity {
-            ..Default::default()
-        })
-        .insert(Sensor)
-        .insert(Collider::ball(0.5))
-        .insert(GravityScale(0.))
-        .insert(
-            LockedAxes::ROTATION_LOCKED_X
-                | LockedAxes::ROTATION_LOCKED_Y
-                | LockedAxes::TRANSLATION_LOCKED_Z,
-        )
-        .insert(Damping {
-            linear_damping: 3.0,
-            ..Default::default()
-        })
-        .insert(ExternalImpulse {
-            ..Default::default()
-        })
-        .insert(Destination(set_destination))
-        .insert(Selectable)
-        .insert(Ownership(Some(*player_uuid)))
-        .insert(Ship)
-        .id();
-
-    match ship_type {
-        ShipType::Fighter => {
-            commands
-                .entity(entity)
-                .insert_bundle(generate_ship_mesh(
-                    ship_type,
-                    transform,
-                    meshes,
-                    player_details,
-                ))
-                .insert(Fighter)
-                .insert(Avoidance {
-                    impulse: Vec3::ZERO,
-                    max_see_ahead: 8.0,
-                })
-                .insert(Movement { speed: 35. });
-        }
-        ShipType::Trade => {
-            commands
-                .entity(entity)
-                .insert_bundle(generate_ship_mesh(
-                    ship_type,
-                    transform,
-                    meshes,
-                    player_details,
-                ))
-                .insert(Trader)
-                .insert(Avoidance {
-                    impulse: Vec3::ZERO,
-                    max_see_ahead: 4.0,
-                })
-                .insert(Movement { speed: 12. });
-        }
-    }
-    entity
-}
-
-pub fn generate_ship_mesh(
-    ship_type: ShipType,
-    transform: Transform,
-    meshes: &mut ResMut<Assets<Mesh>>,
-    player_details: &PlayerDetails,
-) -> MaterialMeshBundle<StandardMaterial> {
-    let mesh = match ship_type {
-        ShipType::Fighter => ship_fighter_mesh(),
-        ShipType::Trade => ship_trader_mesh(),
-    };
-
-    PbrBundle {
-        mesh: meshes.add(mesh),
-        transform,
-        material: player_details.color.clone(),
-        ..default()
-    }
-}
-
-fn ship_fighter_mesh() -> Mesh {
-    // points are (vec3[position], vec2[uvs])
-    let points = vec![
-        ([0.0, 1.0, 0.0], [1.0, 1.0]),
-        ([-1.0, -1.0, 0.0], [0., 0.]),
-        ([0.0, -0.5, 0.0], [0.5, 0.5]),
-        ([1.0, -1.0, 0.0], [0., 0.]),
-    ];
-    let mut vertices = Vec::with_capacity(points.len());
-    let mut uvs = Vec::with_capacity(points.len());
-    let normals = vec![[0.0, 0.0, 1.0]; points.len()];
-
-    for (position, uv) in points.iter() {
-        vertices.push(*position);
-        uvs.push(*uv);
-    }
-
-    let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
-    mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, vertices);
-    mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
-    mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, uvs);
-    mesh.set_indices(Some(Indices::U32(vec![0, 1, 2, 0, 2, 3])));
-    mesh
-}
-
-fn ship_trader_mesh() -> Mesh {
-    // points are (vec3[position], vec2[uvs])
-    // CHECK: UVs are random values
-    let points = vec![
-        ([0.0, 2.0, 0.0], [1.0, 1.0]),
-        ([-1.0, 1.0, 0.0], [0., 0.]),
-        ([-1.0, -0.5, 0.0], [0., 0.]),
-        ([0.0, -0.2, 0.0], [0.5, 0.5]),
-        ([1.0, -0.5, 0.0], [0., 0.]),
-        ([1.0, 1.0, 0.0], [0., 0.]),
-    ];
-    let mut vertices = Vec::with_capacity(points.len());
-    let mut uvs = Vec::with_capacity(points.len());
-    let normals = vec![[0.0, 0.0, 1.0]; points.len()];
-
-    for (position, uv) in points.iter() {
-        vertices.push(*position);
-        uvs.push(*uv);
-    }
-
-    let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
-    mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, vertices);
-    mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
-    mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, uvs);
-    mesh.set_indices(Some(Indices::U32(vec![0, 1, 2, 0, 2, 3, 0, 3, 4, 0, 4, 5])));
-    mesh
-}
-
-fn bullet_mesh() -> Mesh {
-    Mesh::from(shape::Capsule {
-        radius: 3.,
-        depth: 20.,
-        ..Default::default()
-    })
-}
-
-fn generate_bullet(
-    color: Color,
-    transform: Transform,
-    meshes: &mut ResMut<Assets<Mesh>>,
-    materials: &mut ResMut<Assets<StandardMaterial>>,
-) -> MaterialMeshBundle<StandardMaterial> {
-    let mesh = bullet_mesh();
-    PbrBundle {
-        mesh: meshes.add(mesh),
-        transform,
-        material: materials.add(StandardMaterial {
-            base_color: color,
-            unlit: true,
-            ..default()
-        }),
-        ..default()
-    }
-}
-
-pub fn spawn_bullet(
-    commands: &mut Commands,
-    meshes: &mut ResMut<Assets<Mesh>>,
-    materials: &mut ResMut<Assets<StandardMaterial>>,
-    transform: Transform,
-    color: Color,
-) {
-    commands
-        .spawn_bundle(generate_bullet(color, transform, meshes, materials))
-        .insert(Bullet {
-            origin: transform.translation,
-            distance: 50.0,
-        })
-        .insert(RigidBody::Dynamic)
-        .insert(Collider::ball(0.2))
-        .insert(Sensor)
-        .insert(Velocity {
-            linvel: transform.up() * 40.,
-            angvel: Vec3::ZERO,
-        });
-    // .insert(Collider::ball(radius))
 }
