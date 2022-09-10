@@ -31,11 +31,11 @@ fn main() {
     .insert_resource(Msaa { samples: 4 })
     .add_plugins(DefaultPlugins)
     .add_plugin(FrameTimeDiagnosticsPlugin::default())
+    .add_plugin(PlayerManagementPlugin)
     .add_plugin(CameraPlugin)
     .add_plugin(StatePlugin)
     .add_plugin(SelectionPlugin)
     .add_plugin(game::components::config::ConfigPlugin) // TODO: get config out of game
-    .add_plugin(PlayerManagementPlugin)
     .add_plugin(GamePlugin)
     .add_plugin(AssetsPlugin)
     .add_plugin(UiPlugin);

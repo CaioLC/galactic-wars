@@ -3,52 +3,43 @@ use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use characteristics::{Bullet, Fighter, Trader};
 
-/* Cast a ray inside of a system. */
-pub fn cast_ray(
+pub fn bullet_hit(
+    // mut ships: Query<(Entity, &Transform)>,
+    // other_ships: Query<(Entity, &Transform), With<Bullet>>,
     rapier_context: Res<RapierContext>,
-    keyboard_input: Res<Input<KeyCode>>,
-    query: Query<&Transform, With<Bullet>>,
 ) {
-    for transform in query.iter() {
-        if keyboard_input.pressed(KeyCode::F) {
-            // println!("Fire!");
-            let ray_pos = transform.translation;
-            let ray_dir = transform.up();
-            let max_toi = 0.5;
-            let solid = true;
-            let groups = InteractionGroups::all();
-            // let filter = None;
-            // if let Some((entity, toi)) =
-            //     rapier_context.cast_ray(ray_pos, ray_dir, max_toi, solid, groups, filter)
-            // {
-            //     // TODO: manage collision event
-            //     // The first collider hit has the entity `entity` and it hit after
-            //     // the ray travelled a distance equal to `ray_dir * toi`.
-            //     let hit_point = ray_pos + ray_dir * toi;
-            //     // println!("Entity {:?} hit at point {}", entity, hit_point);
-            // }
+    for (e_1, e_2, intersects) in rapier_context.intersection_pairs() {
+        if intersects {
+            println!("{:?}, {:?}", e_1, e_2);
         }
     }
-
-    // if let Some((entity, intersection)) = rapier_context.cast_ray_and_get_normal(
-    // ray_pos, ray_dir, max_toi, solid, groups, filter
-    // ) {
-    // // This is similar to `QueryPipeline::cast_ray` illustrated above except
-    // // that it also returns the normal of the collider shape at the hit point.
-    // let hit_point = intersection.point;
-    // let hit_normal = intersection.normal;
-    // println!("Entity {:?} hit at point {} with normal {}", entity, hit_point, hit_normal);
+    // for (ship_e, mut avoidance, transform) in ships.iter_mut() {
+    //     avoidance.impulse = Vec3::ZERO;
+    //     for (col_1, col_2, intersects) in rapier_context.intersections_with(ship_e) {
+    //         if intersects {
+    //             if ship_e == col_1 {
+    //                 let other_ship = other_ships.get(col_2);
+    //                 if let Ok((_, o_transf)) = other_ship {
+    //                     let dist = o_transf.translation - transform.translation;
+    //                     let repel = dist.try_normalize();
+    //                     if let Some(r) = repel {
+    //                         avoidance.impulse = -r
+    //                     }
+    //                 }
+    //             } else {
+    //                 let other_ship = other_ships.get(col_1);
+    //                 if let Ok((_, o_transf)) = other_ship {
+    //                     let dist = o_transf.translation - transform.translation;
+    //                     let repel = dist.try_normalize();
+    //                     if let Some(r) = repel {
+    //                         avoidance.impulse = -r
+    //                     }
+    //                 }
+    //             }
+    //             break;
+    //         }
+    //     }
     // }
-
-    // rapier_context.intersections_with_ray(
-    // ray_pos, ray_dir, max_toi, solid, groups, filter,
-    // |entity, intersection| {
-    // // Callback called on each collider hit by the ray.
-    // let hit_point = intersection.point;
-    // let hit_normal = intersection.normal;
-    // println!("Entity {:?} hit at point {} with normal {}", entity, hit_point, hit_normal);
-    // true // Return `false` instead if we want to stop searching for other hits.
-    // });
 }
 
 pub fn fire_bullet(

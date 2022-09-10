@@ -7,7 +7,7 @@ impl Plugin for ConfigPlugin {
             .insert_resource(InitGameSetup {
                 no_of_planets: 3,
                 starting_resources: 500,
-                epoch_seconds: 10,
+                epoch_seconds: 30,
             });
     }
 }

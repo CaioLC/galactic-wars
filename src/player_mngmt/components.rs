@@ -1,4 +1,5 @@
 use bevy::{prelude::*, utils::Uuid};
+use bevy_rapier3d::prelude::*;
 
 #[derive(Component)]
 pub struct Ownership(pub Option<Uuid>);
@@ -22,3 +23,11 @@ pub enum AllegianceStatus {
     Neutral,
     Enemy,
 }
+
+pub enum AllegianceCollisionGroups {
+    Friend = 0b1101,
+    Neutral = 0b0010,
+    Enemy = 0b0011,
+}
+
+pub const INTERACT: InteractionGroups = InteractionGroups::new(1, 1);

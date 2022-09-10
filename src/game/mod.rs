@@ -46,7 +46,7 @@ impl Plugin for GamePlugin {
             .add_stage_before(
                 CoreStage::Update,
                 "fighter_producer_tick",
-                FixedTimestepStage::new(Duration::from_secs_f32(0.5))
+                FixedTimestepStage::new(Duration::from_secs_f32(5.)) //TODO: this should be configurable
                     .with_stage(SystemStage::parallel().with_system(production::production_tick)),
             )
             .add_system_set(
@@ -62,7 +62,7 @@ impl Plugin for GamePlugin {
                     .with_system(movement::remove_destination)
                     .with_system(movement::damping_shift)
                     .with_system(movement::collision_avoidance)
-                    .with_system(combat::cast_ray)
+                    .with_system(combat::bullet_hit)
                     .with_system(combat::fire_bullet)
                     .with_system(combat::despawn_bullet)
                     // this should be moved to a system set that runs at the end of frame
@@ -74,10 +74,6 @@ impl Plugin for GamePlugin {
 
         #[cfg(feature = "debug")]
         app.add_plugin(RapierDebugRenderPlugin::default());
-    }
-
-    fn name(&self) -> &str {
-        std::any::type_name::<Self>()
     }
 }
 
@@ -390,6 +386,8 @@ pub fn spawn_bullet(
             distance: 50.0,
         })
         .insert(RigidBody::Dynamic)
+        .insert(Collider::ball(0.2))
+        .insert(Sensor)
         .insert(Velocity {
             linvel: transform.up() * 40.,
             angvel: Vec3::ZERO,
