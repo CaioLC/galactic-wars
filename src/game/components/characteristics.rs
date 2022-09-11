@@ -1,4 +1,8 @@
 use bevy::{prelude::*, utils::Uuid};
+use rand::{
+    distributions::{Standard, WeightedIndex},
+    prelude::Distribution,
+};
 
 // EVENTS
 pub struct TakeOwnership {
@@ -63,15 +67,43 @@ pub enum ShipType {
 #[derive(Component)]
 pub struct Planet {
     pub fighters: f32,
-    pub size: f32,
+    pub planet_type: PlanetType,
 }
 
-impl Default for Planet {
-    fn default() -> Self {
-        Self {
-            fighters: 0.,
-            size: 1.,
+#[cfg_attr(feature = "debug", derive(bevy_inspector_egui::Inspectable))]
+pub enum PlanetType {
+    Outpost,
+    Watch,
+    Base,
+    Colony,
+    Capital,
+}
+
+impl Distribution<PlanetType> for Standard {
+    fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> PlanetType {
+        match rng.gen_range(0..=9) {
+            0 => PlanetType::Outpost,
+            1 => PlanetType::Outpost,
+            2 => PlanetType::Outpost,
+            3 => PlanetType::Watch,
+            4 => PlanetType::Watch,
+            5 => PlanetType::Base,
+            6 => PlanetType::Base,
+            7 => PlanetType::Colony,
+            8 => PlanetType::Colony,
+            9 => PlanetType::Capital,
+            _ => panic!("random generator exceede values between 0-9 for PlanetType generation"),
         }
+    }
+}
+
+pub fn planet_type_to_radius(pt: &PlanetType) -> f32 {
+    match pt {
+        PlanetType::Outpost => 2.,
+        PlanetType::Watch => 3.,
+        PlanetType::Base => 5.,
+        PlanetType::Colony => 8.,
+        PlanetType::Capital => 12.,
     }
 }
 

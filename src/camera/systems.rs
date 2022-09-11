@@ -15,29 +15,28 @@ pub fn camera_system(
     let mut direction = Vec3::ZERO;
     let scale: f32 = transf.scale.x;
     if keyboard_input.pressed(KeyCode::A) {
-        direction -= Vec3::new(1.0, 0.0, 0.0);
-        dbg!("'A' pressed");
+        direction -= Vec3::new(2.0, 0.0, 0.0);
     }
 
     if keyboard_input.pressed(KeyCode::D) {
-        direction += Vec3::new(1.0, 0.0, 0.0);
+        direction += Vec3::new(2.0, 0.0, 0.0);
     }
 
     if keyboard_input.pressed(KeyCode::W) {
-        direction += Vec3::new(0.0, 1.0, 0.0);
+        direction += Vec3::new(0.0, 2.0, 0.0);
     }
 
     if keyboard_input.pressed(KeyCode::S) {
-        direction -= Vec3::new(0.0, 1.0, 0.0);
+        direction -= Vec3::new(0.0, 2.0, 0.0);
     }
 
     if keyboard_input.pressed(KeyCode::Z) {
-        let scale = scale + 0.1;
+        let scale = scale + 0.5;
         transf.scale = Vec3::splat(scale);
     }
 
     if keyboard_input.pressed(KeyCode::X) {
-        let scale = scale - 0.1;
+        let scale = scale - 0.5;
         transf.scale = Vec3::splat(scale);
     }
     for e in ms_wheel_rdr.iter() {

@@ -95,7 +95,9 @@ pub fn set_destination(
         let ship_dest = vec2_to_vec3(mouse_pos.0, Layers::Ships);
         let mut target_planet = None;
         for (e, planet, transform) in planet_query.iter() {
-            if planet_dest.distance(transform.translation) < planet.size {
+            if planet_dest.distance(transform.translation)
+                < planet_type_to_radius(&planet.planet_type)
+            {
                 target_planet = Some(e);
                 break;
             }

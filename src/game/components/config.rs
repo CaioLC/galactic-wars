@@ -5,10 +5,10 @@ impl Plugin for ConfigPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(BoardAssets::default())
             .insert_resource(InitGameSetup {
-                no_of_planets: 3,
+                no_of_planets: 50,
                 starting_resources: 500,
                 epoch_seconds: 30,
-                galaxy_size: Galaxy::Small,
+                galaxy_size: Galaxy::Tiny,
             });
     }
 }
@@ -22,6 +22,18 @@ pub enum Galaxy {
     Huge,
     Ludicrous,
 }
+
+pub fn galaxy_size_to_radius(galaxy: &Galaxy) -> f32 {
+    match galaxy {
+        Galaxy::Tiny => 300.,
+        Galaxy::Small => 900.,
+        Galaxy::Medium => 1500.,
+        Galaxy::Large => 2200.,
+        Galaxy::Huge => 3500.,
+        Galaxy::Ludicrous => 5000.,
+    }
+}
+
 // #[cfg_attr(feature = "debug", derive(bevy_inspector_egui::Inspectable))]
 #[derive(Default)]
 pub struct BoardAssets {

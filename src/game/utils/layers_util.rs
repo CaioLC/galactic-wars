@@ -12,7 +12,7 @@ pub fn get_z(obj_type: Layers) -> f32 {
         Layers::Ships => 0.,
         Layers::Planets => 0.,
         Layers::BoxSelect => 3.,
-        Layers::Text => 7.5,
+        Layers::Text => 27.5,
     }
 }
 

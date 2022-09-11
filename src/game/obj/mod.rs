@@ -18,12 +18,13 @@ pub fn spawn_planet(
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
     font: Handle<TextMeshFont>,
-    radius: f32,
+    planet_type: PlanetType,
     transform: Transform,
     ownership: Option<Uuid>,
     color: Handle<StandardMaterial>,
     no_fighters: f32,
 ) -> Entity {
+    let radius: f32 = planet_type_to_radius(&planet_type); // from planet type return radius
     commands
         .spawn_bundle(generate_planet_mesh(
             radius, color, transform, meshes, materials,
@@ -33,7 +34,7 @@ pub fn spawn_planet(
         .insert(ActiveEvents::COLLISION_EVENTS)
         .insert(Planet {
             fighters: no_fighters,
-            size: radius,
+            planet_type,
         })
         .insert(Selectable)
         .insert(Ownership(ownership))
@@ -44,7 +45,7 @@ pub fn spawn_planet(
                     text: String::from("0"),
                     style: TextMeshStyle {
                         font,
-                        font_size: SizeUnit::NonStandard(70.),
+                        font_size: SizeUnit::NonStandard(90.),
                         color: Color::rgb(0.1, 0.2, 0.1),
                         mesh_quality: Quality::Custom(128),
                         ..Default::default()

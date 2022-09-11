@@ -97,7 +97,9 @@ pub fn deploy_fighters(
         let planet_dest = vec2_to_vec3(mouse_pos.0, Layers::Planets);
         let ship_dest = vec2_to_vec3(mouse_pos.0, Layers::Ships);
         for (e, planet, transform) in set.p0().iter() {
-            if planet_dest.distance(transform.translation) < planet.size {
+            if planet_dest.distance(transform.translation)
+                < planet_type_to_radius(&planet.planet_type)
+            {
                 find_destination = Some(e);
                 break;
             }
@@ -115,8 +117,11 @@ pub fn deploy_fighters(
             if let Some(p_uuid) = owner.0 {
                 let player_details = players.0.get(&p_uuid).unwrap();
                 for i in 0..planet.fighters as i32 {
-                    let ship_pos =
-                        compute_ship_spawn_position(i, transform.translation(), planet.size);
+                    let ship_pos = compute_ship_spawn_position(
+                        i,
+                        transform.translation(),
+                        planet_type_to_radius(&planet.planet_type),
+                    );
                     let entity = game::spawn_ship(
                         &mut commands,
                         &mut meshes,

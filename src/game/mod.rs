@@ -4,7 +4,7 @@ pub mod resources;
 mod systems;
 pub mod utils;
 
-use std::time::Duration;
+use std::{f32::consts::PI, time::Duration};
 
 use bevy::{
     prelude::*,
@@ -106,15 +106,34 @@ fn setup(
     );
 
     // Set Player starting planets
+    let mut placed_planets: Vec<Vec3> = Vec::new();
     for (pk, pd) in players.0.iter() {
-        let transf = random_pos();
+        let mut finding_space = true;
+        let mut transf = random_planet_pos(&board_params);
+        while finding_space {
+            let mut conflict_planet = None;
+            for planet in placed_planets.iter() {
+                if planet.distance(transf.translation)
+                    < 5. * planet_type_to_radius(&PlanetType::Capital)
+                {
+                    conflict_planet = Some(planet);
+                    break;
+                }
+            }
+            match conflict_planet {
+                // keep re-running random_planet_pos while there is conflict between planets
+                Some(_) => transf = random_planet_pos(&board_params),
+                None => finding_space = false,
+            }
+        }
+        placed_planets.push(transf.translation);
         spawn_planet(
             &mut commands,
             &mut meshes,
             &mut materials,
             asset_server.load("fonts/ShareTechMono.ttf"),
             // Planet config
-            5.0,
+            PlanetType::Capital,
             transf,
             Some(*pk),
             pd.color.clone(),
@@ -128,15 +147,34 @@ fn setup(
         unlit: true,
         ..Default::default()
     });
+
     for _ in 0..board_params.no_of_planets {
+        let mut finding_space = true;
+        let mut transf = random_planet_pos(&board_params);
+        let planet_type = rand::random::<PlanetType>();
+        while finding_space {
+            let mut conflict_planet = None;
+            for planet in placed_planets.iter() {
+                if planet.distance(transf.translation) < 2. * planet_type_to_radius(&planet_type) {
+                    conflict_planet = Some(planet);
+                    break;
+                }
+            }
+            match conflict_planet {
+                // keep re-running random_planet_pos while there is conflict between planets
+                Some(_) => transf = random_planet_pos(&board_params),
+                None => finding_space = false,
+            }
+        }
+        placed_planets.push(transf.translation);
         spawn_planet(
             &mut commands,
             &mut meshes,
             &mut materials,
             asset_server.load("fonts/ShareTechMono.ttf"),
             // Planet config
-            3.0,
-            random_pos(),
+            planet_type,
+            transf,
             None,
             non_player_color.clone(),
             20.,
@@ -225,10 +263,14 @@ fn register_players(
     );
 }
 
-fn random_pos() -> Transform {
+fn random_planet_pos(game_config: &Res<InitGameSetup>) -> Transform {
     let z = get_z(Layers::Planets);
-    let x = (rand::random::<f32>() - 0.5) * 80.;
-    let y = (rand::random::<f32>() - 0.5) * 80.;
-    dbg!(x, y, z);
+    let radius = components::config::galaxy_size_to_radius(&game_config.galaxy_size);
+    let dist = rand::random::<f32>();
+    let angle = rand::random::<f32>() * PI * 2.0;
+    let x = angle.cos() * dist * radius;
+    let y = angle.sin() * dist * radius;
     Transform::from_xyz(x, y, z)
 }
+
+// fn random_player_pos() -> Transform {}
