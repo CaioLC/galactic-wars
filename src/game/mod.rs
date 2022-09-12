@@ -36,13 +36,17 @@ impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
         app
             .add_plugin(config::ConfigPlugin)
+            // ships resources
             .insert_resource(FightersDeployed(0))
             .insert_resource(FightersStored(0))
             .insert_resource(TotalTraders(0))
             .insert_resource(TotalDreadnoughts(0))
             .insert_resource(TotalPlanets(0))
             .insert_resource(MovingFleets(HashMap::new()))
+            // game global resources
             .insert_resource(GameStatus(GameStatusEnum::Uninitialized))
+            .insert_resource(IsTradeRouting{ key_down: false, trade_route: Vec::new() })
+            // player resources
             .insert_resource(RegisteredPlayers(HashMap::new()))
             .insert_resource(AllegiancesToOthers(HashMap::new()))
             .insert_resource(PlayerMoney(HashMap::new()))
@@ -70,6 +74,8 @@ impl Plugin for GamePlugin {
                     .with_system(movement::remove_destination)
                     .with_system(movement::damping_shift)
                     .with_system(movement::collision_avoidance)
+                    .with_system(movement::define_trade_route)
+                    .with_system(movement::update_trade_destination)
                     .with_system(combat::bullet_hit)
                     .with_system(combat::fire_bullet)
                     .with_system(combat::despawn_bullet)
@@ -130,7 +136,6 @@ fn setup(
         spawn_planet(
             &mut commands,
             &mut meshes,
-            &mut materials,
             asset_server.load("fonts/ShareTechMono.ttf"),
             // Planet config
             PlanetType::Capital,
@@ -138,6 +143,15 @@ fn setup(
             Some(*pk),
             pd.color.clone(),
             0.,
+        );
+        spawn_ship(
+            &mut commands,
+            &mut meshes,
+            ShipType::Trade,
+            transf.with_translation(transf.translation + Vec3::new(20., 0., 0.)),
+            DestinationEnum::None,
+            pk,
+            pd,
         );
     }
 
@@ -155,7 +169,7 @@ fn setup(
         while finding_space {
             let mut conflict_planet = None;
             for planet in placed_planets.iter() {
-                if planet.distance(transf.translation) < 2. * planet_type_to_radius(&planet_type) {
+                if planet.distance(transf.translation) < 4. * planet_type_to_radius(&planet_type) {
                     conflict_planet = Some(planet);
                     break;
                 }
@@ -170,7 +184,6 @@ fn setup(
         spawn_planet(
             &mut commands,
             &mut meshes,
-            &mut materials,
             asset_server.load("fonts/ShareTechMono.ttf"),
             // Planet config
             planet_type,

@@ -5,10 +5,10 @@ use kayak_ui::core::styles::{Corner, Edge, LayoutType};
 use kayak_ui::core::{
     rsx,
     styles::{Style, StyleProp, Units},
-    use_state, widget, Bound, MutableBound, OnEvent, WidgetProps,
+    widget, Bound, WidgetProps,
 };
 use kayak_ui::core::{Binding, Color};
-use kayak_ui::widgets::{Background, Element, If, Image, ImageProps, Text, TextProps};
+use kayak_ui::widgets::{Background, Element, If, Text};
 
 use super::generics::*;
 use super::styles::*;

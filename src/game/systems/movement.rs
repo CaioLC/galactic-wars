@@ -1,10 +1,11 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 
-use super::super::utils::layers_util::*;
 use crate::camera::MouseWorldPos;
 use crate::game::components::characteristics::*;
 use crate::game::resources::game_obj_res::MovingFleets;
+use crate::game::resources::game_status_res::IsTradeRouting;
+use crate::game::utils::layers_util::*;
 use crate::selection::components::Selected;
 
 use crate::math_util;
@@ -86,41 +87,49 @@ pub fn move_to_destination(
 pub fn set_destination(
     ms_input: Res<Input<MouseButton>>,
     mouse_pos: Res<MouseWorldPos>,
+    is_trade_routing: Res<IsTradeRouting>,
     mut fleets_context: ResMut<MovingFleets>,
     mut query: Query<(Entity, &mut Destination), With<Selected>>,
     planet_query: Query<(Entity, &Planet, &Transform)>,
 ) {
-    if ms_input.pressed(MouseButton::Right) {
-        let planet_dest = vec2_to_vec3(mouse_pos.0, Layers::Planets);
-        let ship_dest = vec2_to_vec3(mouse_pos.0, Layers::Ships);
-        let mut target_planet = None;
-        for (e, planet, transform) in planet_query.iter() {
-            if planet_dest.distance(transform.translation)
-                < planet_type_to_radius(&planet.planet_type)
-            {
-                target_planet = Some(e);
-                break;
-            }
-        }
-        match target_planet {
-            Some(e) => {
-                for (_, mut destination) in query.iter_mut() {
-                    destination.0 = DestinationEnum::Planet {
-                        planet: e,
-                        loc: ship_dest,
-                    };
+    if !is_trade_routing.key_down {
+        if ms_input.pressed(MouseButton::Right) {
+            let planet_dest = vec2_to_vec3(mouse_pos.0, Layers::Planets);
+            let ship_dest = vec2_to_vec3(mouse_pos.0, Layers::Ships);
+            let target_planet = find_planet(planet_query, planet_dest);
+            match target_planet {
+                Some(e) => {
+                    for (_, mut destination) in query.iter_mut() {
+                        destination.0 = DestinationEnum::Planet {
+                            planet: e,
+                            loc: ship_dest,
+                        };
+                    }
                 }
-            }
-            None => {
-                let mut moving_fleet = Vec::new();
-                for (e, mut destination) in query.iter_mut() {
-                    destination.0 = DestinationEnum::Space(ship_dest);
-                    moving_fleet.push(e);
+                None => {
+                    let mut moving_fleet = Vec::new();
+                    for (e, mut destination) in query.iter_mut() {
+                        destination.0 = DestinationEnum::Space(ship_dest);
+                        moving_fleet.push(e);
+                    }
+                    fleets_context.0.insert(ship_dest.to_string(), moving_fleet);
                 }
-                fleets_context.0.insert(ship_dest.to_string(), moving_fleet);
             }
         }
     }
+}
+
+fn find_planet(
+    planet_query: Query<(Entity, &Planet, &Transform)>,
+    planet_dest: Vec3,
+) -> Option<Entity> {
+    for (e, planet, transform) in planet_query.iter() {
+        if planet_dest.distance(transform.translation) < planet_type_to_radius(&planet.planet_type)
+        {
+            return Some(e);
+        }
+    }
+    return None;
 }
 
 pub fn remove_destination(
@@ -192,6 +201,64 @@ pub fn collision_avoidance(
                 }
                 break;
             }
+        }
+    }
+}
+
+pub fn define_trade_route(
+    kb_input: Res<Input<KeyCode>>,
+    ms_input: Res<Input<MouseButton>>,
+    ms_pos: Res<MouseWorldPos>,
+    mut is_trade_routing: ResMut<IsTradeRouting>,
+    planet_query: Query<(Entity, &Planet, &Transform)>,
+    mut trade_ships: Query<(&mut Destination, &mut TradeRoute), With<Selected>>,
+) {
+    if kb_input.just_pressed(KeyCode::LControl) {
+        is_trade_routing.key_down = true;
+        is_trade_routing.trade_route = Vec::new();
+    }
+
+    if is_trade_routing.key_down {
+        if ms_input.just_pressed(MouseButton::Right) {
+            let ship_dest = vec2_to_vec3(ms_pos.0, Layers::Ships);
+            let planet_dest = vec2_to_vec3(ms_pos.0, Layers::Planets);
+            let target_planet = find_planet(planet_query, planet_dest);
+            if let Some(_) = target_planet {
+                // TODO: not all planets are valid trade route destinations. implement this here before pushing to vector
+                is_trade_routing
+                    .trade_route
+                    .push(DestinationEnum::Space(ship_dest));
+                dbg!("Added {:?} to route", ship_dest);
+            }
+        }
+    }
+
+    if kb_input.just_released(KeyCode::LControl) {
+        is_trade_routing.key_down = false;
+        for (mut dest, mut trade_route) in trade_ships.iter_mut() {
+            dest.0 = is_trade_routing.trade_route[0].clone();
+            *trade_route = TradeRoute {
+                route_loop: Some(is_trade_routing.trade_route.clone()),
+                route_size: is_trade_routing.trade_route.len(),
+                route_pos: 0,
+            }
+        }
+    }
+}
+
+pub fn update_trade_destination(mut trade_ships: Query<(&mut Destination, &mut TradeRoute)>) {
+    for (mut dest, mut route) in trade_ships.iter_mut() {
+        if let Some(trade_route) = &route.route_loop {
+            match dest.0 {
+                DestinationEnum::None => {
+                    let next_planet = (route.route_pos + 1) % route.route_size;
+                    let new_dest = &trade_route[next_planet];
+                    dest.0 = new_dest.clone();
+                    route.route_pos = next_planet;
+                }
+                DestinationEnum::Space(_) => {}
+                DestinationEnum::Planet { planet: _, loc: _ } => {}
+            };
         }
     }
 }

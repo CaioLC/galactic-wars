@@ -13,10 +13,10 @@ use super::components::{
 use super::utils::layers_util::{get_z, Layers};
 use crate::selection::components::Selectable;
 
+/// .
 pub fn spawn_planet(
     commands: &mut Commands,
     meshes: &mut ResMut<Assets<Mesh>>,
-    materials: &mut ResMut<Assets<StandardMaterial>>,
     font: Handle<TextMeshFont>,
     planet_type: PlanetType,
     transform: Transform,
@@ -26,9 +26,7 @@ pub fn spawn_planet(
 ) -> Entity {
     let radius: f32 = planet_type_to_radius(&planet_type); // from planet type return radius
     commands
-        .spawn_bundle(generate_planet_mesh(
-            radius, color, transform, meshes, materials,
-        ))
+        .spawn_bundle(generate_planet_mesh(radius, color, transform, meshes))
         .insert(RigidBody::Fixed)
         .insert(Collider::ball(radius))
         .insert(ActiveEvents::COLLISION_EVENTS)
@@ -67,7 +65,6 @@ fn generate_planet_mesh(
     color: Handle<StandardMaterial>,
     transform: Transform,
     meshes: &mut ResMut<Assets<Mesh>>,
-    materials: &mut ResMut<Assets<StandardMaterial>>,
 ) -> MaterialMeshBundle<StandardMaterial> {
     let mesh = Mesh::from(shape::Icosphere {
         radius,
@@ -81,6 +78,7 @@ fn generate_planet_mesh(
     }
 }
 
+/// .
 pub fn spawn_ship(
     commands: &mut Commands,
     meshes: &mut ResMut<Assets<Mesh>>,
@@ -130,7 +128,7 @@ pub fn spawn_ship(
                 .insert(Fighter)
                 .insert(Avoidance {
                     impulse: Vec3::ZERO,
-                    max_see_ahead: 8.0,
+                    // max_see_ahead: 8.0,
                 })
                 .insert(Movement { speed: 35. });
         }
@@ -144,9 +142,10 @@ pub fn spawn_ship(
                     player_details,
                 ))
                 .insert(Trader)
+                .insert(TradeRoute::default())
                 .insert(Avoidance {
                     impulse: Vec3::ZERO,
-                    max_see_ahead: 4.0,
+                    // max_see_ahead: 4.0,
                 })
                 .insert(Movement { speed: 12. });
         }

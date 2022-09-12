@@ -42,7 +42,6 @@ fn main() {
     #[cfg(feature = "debug")]
     app.add_plugin(WorldInspectorPlugin::new())
         // .add_plugin(InspectorPlugin::<game::components::interact::Destination>::new());
-        .register_inspectable::<game::components::characteristics::EnRouteBehaviour>()
         .register_inspectable::<game::components::characteristics::Movement>()
         .register_inspectable::<game::components::characteristics::Avoidance>()
         .register_inspectable::<game::components::characteristics::Planet>();

@@ -1,8 +1,5 @@
 use bevy::{prelude::*, utils::Uuid};
-use rand::{
-    distributions::{Standard, WeightedIndex},
-    prelude::Distribution,
-};
+use rand::{distributions::Standard, prelude::Distribution};
 
 // EVENTS
 pub struct TakeOwnership {
@@ -38,26 +35,35 @@ pub struct Movement {
 #[derive(Component)]
 pub struct Avoidance {
     pub impulse: Vec3,
-    pub max_see_ahead: f32,
+    // pub max_see_ahead: f32,
 }
 
 #[derive(Component)]
 pub struct Destination(pub DestinationEnum);
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum DestinationEnum {
     None,
     Space(Vec3),
     Planet { planet: Entity, loc: Vec3 },
 }
 
-#[cfg_attr(feature = "debug", derive(bevy_inspector_egui::Inspectable))]
 #[derive(Component)]
-pub struct EnRouteBehaviour {
-    pub point_a: Vec3,
-    pub point_b: Vec3,
-    pub en_route_to: Vec3,
+pub struct TradeRoute {
+    pub route_loop: Option<Vec<DestinationEnum>>,
+    pub route_size: usize,
+    pub route_pos: usize,
 }
+impl Default for TradeRoute {
+    fn default() -> Self {
+        Self {
+            route_loop: None,
+            route_size: 0,
+            route_pos: 0,
+        }
+    }
+}
+
 pub enum ShipType {
     Trade,
     Fighter,

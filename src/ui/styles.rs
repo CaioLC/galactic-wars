@@ -1,12 +1,12 @@
 use kayak_ui::core::{
-    styles::{Corner, Edge, LayoutType, PositionType, Style, StyleProp, Units},
+    styles::{Corner, Edge, LayoutType, Style, StyleProp, Units},
     Color, CursorIcon,
 };
 
 // const COLOR_PRIMARY: (f32, f32, f32, f32) = (44., 54., 57., 0.);
 pub const COLOR_PRIMARY: (f32, f32, f32, f32) = (44., 54., 57., 1.);
 pub const COLOR_SECONDARY: (f32, f32, f32, f32) = (63., 78., 79., 1.);
-pub const COLOR_ALERT: (f32, f32, f32, f32) = (162., 123., 92., 1.);
+// pub const COLOR_ALERT: (f32, f32, f32, f32) = (162., 123., 92., 1.);
 pub const COLOR_TEXT: (f32, f32, f32, f32) = (220., 215., 201., 1.);
 
 #[derive(Debug, Clone, Eq, PartialEq)]

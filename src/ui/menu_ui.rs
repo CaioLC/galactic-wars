@@ -1,21 +1,18 @@
+#[allow(unused_imports)]
 use bevy::app::AppExit;
-use bevy::prelude::{EventWriter, Handle, Res, ResMut, World};
+use bevy::prelude::{EventWriter, Res, World};
 use iyes_loopless::state::NextState;
 
-use kayak_ui::bevy::{BevyContext, ImageManager};
-use kayak_ui::core::styles::{Corner, Edge, LayoutType};
-use kayak_ui::core::{
-    render, rsx,
-    styles::{Style, StyleProp, Units},
-    use_state, widget, Bound, Children, EventType, MutableBound, OnEvent, WidgetProps,
-};
-use kayak_ui::core::{Binding, Color};
-use kayak_ui::widgets::{Background, Button, Element, If, Image, NinePatch, Text, Window};
+use kayak_ui::bevy::ImageManager;
+use kayak_ui::core::styles::Edge;
+use kayak_ui::core::Binding;
+use kayak_ui::core::{rsx, widget, Bound, EventType, OnEvent};
+use kayak_ui::widgets::{If, NinePatch, Text};
 
 use super::generics as gen;
 use super::styles::*;
 use crate::assets::ImageAssets;
-use crate::state::{self, GameState};
+use crate::state::GameState;
 
 #[widget]
 pub fn GameMenu() {

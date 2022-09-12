@@ -7,7 +7,7 @@ impl Plugin for ConfigPlugin {
             .insert_resource(InitGameSetup {
                 no_of_planets: 50,
                 starting_resources: 500,
-                epoch_seconds: 30,
+                epoch_seconds: 3, // BUG: this is not linked to the fixed time system
                 galaxy_size: Galaxy::Tiny,
             });
     }
