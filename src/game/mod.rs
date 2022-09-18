@@ -14,7 +14,7 @@ use bevy_rapier3d::prelude::*;
 use bevy_text_mesh::prelude::*;
 use iyes_loopless::prelude::*;
 
-use crate::state::GameState;
+use crate::{assets::materials::CoolMaterial, state::GameState};
 
 use components::{
     characteristics::*,
@@ -99,15 +99,27 @@ fn setup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    mut my_material_assets: ResMut<Assets<CoolMaterial>>,
     mut money: ResMut<PlayerMoney>,
     mut allegiances_to_others: ResMut<AllegiancesToOthers>,
 ) {
+    commands.spawn_bundle(MaterialMeshBundle {
+        mesh: meshes.add(Mesh::from(shape::Circle::default())).into(),
+        transform: Transform::from_xyz(-0.6, 0.0, 0.0).with_scale(Vec3 {
+            x: 3.,
+            y: 3.,
+            z: 3.,
+        }),
+        material: my_material_assets.add(CoolMaterial {}),
+        ..default()
+    });
     // setup players
     setup_players(
         &board_params,
         &mut players,
         &mut money,
         &mut materials,
+        &mut my_material_assets,
         &mut allegiances_to_others,
     );
 
@@ -141,7 +153,7 @@ fn setup(
             PlanetType::Capital,
             transf,
             Some(*pk),
-            pd.color.clone(),
+            pd.new_color.clone(),
             0.,
         );
         spawn_ship(
@@ -155,47 +167,47 @@ fn setup(
         );
     }
 
-    // Set other planets
-    let non_player_color = materials.add(StandardMaterial {
-        base_color: Color::GRAY,
-        unlit: true,
-        ..Default::default()
-    });
+    // // Set other planets
+    // let non_player_color = materials.add(StandardMaterial {
+    //     base_color: Color::GRAY,
+    //     unlit: true,
+    //     ..Default::default()
+    // });
 
-    for _ in 0..board_params.no_of_planets {
-        let mut finding_space = true;
-        let mut transf = random_planet_pos(&board_params);
-        let planet_type = rand::random::<PlanetType>();
-        while finding_space {
-            let mut conflict_planet = None;
-            for planet in placed_planets.iter() {
-                if planet.distance(transf.translation) < 4. * planet_type_to_radius(&planet_type) {
-                    conflict_planet = Some(planet);
-                    break;
-                }
-            }
-            match conflict_planet {
-                // keep re-running random_planet_pos while there is conflict between planets
-                Some(_) => transf = random_planet_pos(&board_params),
-                None => finding_space = false,
-            }
-        }
-        placed_planets.push(transf.translation);
-        spawn_planet(
-            &mut commands,
-            &mut meshes,
-            asset_server.load("fonts/ShareTechMono.ttf"),
-            // Planet config
-            planet_type,
-            transf,
-            None,
-            non_player_color.clone(),
-            20.,
-        );
-    }
+    // for _ in 0..board_params.no_of_planets {
+    //     let mut finding_space = true;
+    //     let mut transf = random_planet_pos(&board_params);
+    //     let planet_type = rand::random::<PlanetType>();
+    //     while finding_space {
+    //         let mut conflict_planet = None;
+    //         for planet in placed_planets.iter() {
+    //             if planet.distance(transf.translation) < 4. * planet_type_to_radius(&planet_type) {
+    //                 conflict_planet = Some(planet);
+    //                 break;
+    //             }
+    //         }
+    //         match conflict_planet {
+    //             // keep re-running random_planet_pos while there is conflict between planets
+    //             Some(_) => transf = random_planet_pos(&board_params),
+    //             None => finding_space = false,
+    //         }
+    //     }
+    //     placed_planets.push(transf.translation);
+    //     spawn_planet(
+    //         &mut commands,
+    //         &mut meshes,
+    //         asset_server.load("fonts/ShareTechMono.ttf"),
+    //         // Planet config
+    //         planet_type,
+    //         transf,
+    //         None,
+    //         non_player_color.clone(),
+    //         20.,
+    //     );
+    // }
 
-    let seed = 3552441;
-    game_status.0 = GameStatusEnum::Started(seed);
+    // let seed = 3552441;
+    // game_status.0 = GameStatusEnum::Started(seed);
 }
 
 fn setup_players(
@@ -203,9 +215,10 @@ fn setup_players(
     players: &mut ResMut<RegisteredPlayers>,
     money: &mut ResMut<PlayerMoney>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
+    my_materials: &mut ResMut<Assets<CoolMaterial>>,
     allegiances_to_others: &mut ResMut<AllegiancesToOthers>,
 ) {
-    register_players(players, materials);
+    register_players(players, materials, my_materials);
     let me = who_am_i("Caio", &players.0).expect("Could not find player"); // TODO: this won't work in real life.
     setup_initial_resources(money, board_params.starting_resources, &players.0);
     setup_allegiances(me, &players.0, allegiances_to_others);
@@ -247,6 +260,7 @@ fn setup_initial_resources(
 fn register_players(
     players: &mut ResMut<RegisteredPlayers>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
+    my_materials: &mut ResMut<Assets<CoolMaterial>>,
 ) {
     players.0.insert(
         Uuid::new_v4(),
@@ -259,6 +273,7 @@ fn register_players(
                     ..Default::default()
                 })
                 .into(),
+            new_color: my_materials.add(CoolMaterial {}),
         },
     );
     players.0.insert(
@@ -272,6 +287,7 @@ fn register_players(
                     ..Default::default()
                 })
                 .into(),
+            new_color: my_materials.add(CoolMaterial {}),
         },
     );
 }

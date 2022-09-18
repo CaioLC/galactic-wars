@@ -11,7 +11,7 @@ use super::components::{
     players::{Ownership, PlayerDetails},
 };
 use super::utils::layers_util::{get_z, Layers};
-use crate::selection::components::Selectable;
+use crate::{assets::materials::CoolMaterial, selection::components::Selectable};
 
 /// .
 pub fn spawn_planet(
@@ -21,7 +21,7 @@ pub fn spawn_planet(
     planet_type: PlanetType,
     transform: Transform,
     ownership: Option<Uuid>,
-    color: Handle<StandardMaterial>,
+    color: Handle<CoolMaterial>,
     no_fighters: f32,
 ) -> Entity {
     let radius: f32 = planet_type_to_radius(&planet_type); // from planet type return radius
@@ -62,18 +62,18 @@ pub fn spawn_planet(
 
 fn generate_planet_mesh(
     radius: f32,
-    color: Handle<StandardMaterial>,
+    planet_material: Handle<CoolMaterial>,
     transform: Transform,
     meshes: &mut ResMut<Assets<Mesh>>,
-) -> MaterialMeshBundle<StandardMaterial> {
-    let mesh = Mesh::from(shape::Icosphere {
+) -> MaterialMeshBundle<CoolMaterial> {
+    let mesh = Mesh::from(shape::Circle {
         radius,
-        subdivisions: 16,
+        ..default()
     });
-    PbrBundle {
+    MaterialMeshBundle {
         mesh: meshes.add(mesh),
         transform,
-        material: color,
+        material: planet_material,
         ..default()
     }
 }
