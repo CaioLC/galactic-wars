@@ -103,16 +103,16 @@ fn setup(
     mut money: ResMut<PlayerMoney>,
     mut allegiances_to_others: ResMut<AllegiancesToOthers>,
 ) {
-    commands.spawn_bundle(MaterialMeshBundle {
-        mesh: meshes.add(Mesh::from(shape::Circle::default())).into(),
-        transform: Transform::from_xyz(-0.6, 0.0, 0.0).with_scale(Vec3 {
-            x: 3.,
-            y: 3.,
-            z: 3.,
-        }),
-        material: my_material_assets.add(CoolMaterial {}),
-        ..default()
-    });
+    // commands.spawn_bundle(MaterialMeshBundle {
+    //     mesh: meshes.add(Mesh::from(shape::Circle::default())).into(),
+    //     transform: Transform::from_xyz(-0.6, 0.0, 0.0).with_scale(Vec3 {
+    //         x: 3.,
+    //         y: 3.,
+    //         z: 3.,
+    //     }),
+    //     material: my_material_assets.add(CoolMaterial { color: Color::RED }),
+    //     ..default()
+    // });
     // setup players
     setup_players(
         &board_params,
@@ -121,6 +121,7 @@ fn setup(
         &mut materials,
         &mut my_material_assets,
         &mut allegiances_to_others,
+        &asset_server,
     );
 
     // Set Player starting planets
@@ -217,8 +218,9 @@ fn setup_players(
     materials: &mut ResMut<Assets<StandardMaterial>>,
     my_materials: &mut ResMut<Assets<CoolMaterial>>,
     allegiances_to_others: &mut ResMut<AllegiancesToOthers>,
+    assets: &Res<AssetServer>,
 ) {
-    register_players(players, materials, my_materials);
+    register_players(players, materials, my_materials, assets);
     let me = who_am_i("Caio", &players.0).expect("Could not find player"); // TODO: this won't work in real life.
     setup_initial_resources(money, board_params.starting_resources, &players.0);
     setup_allegiances(me, &players.0, allegiances_to_others);
@@ -261,6 +263,7 @@ fn register_players(
     players: &mut ResMut<RegisteredPlayers>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
     my_materials: &mut ResMut<Assets<CoolMaterial>>,
+    assets: &Res<AssetServer>,
 ) {
     players.0.insert(
         Uuid::new_v4(),
@@ -273,7 +276,10 @@ fn register_players(
                     ..Default::default()
                 })
                 .into(),
-            new_color: my_materials.add(CoolMaterial {}),
+            new_color: my_materials.add(CoolMaterial {
+                color: Color::BLUE,
+                image: assets.load("img/awesome.png"),
+            }),
         },
     );
     players.0.insert(
@@ -287,7 +293,10 @@ fn register_players(
                     ..Default::default()
                 })
                 .into(),
-            new_color: my_materials.add(CoolMaterial {}),
+            new_color: my_materials.add(CoolMaterial {
+                color: Color::RED,
+                image: assets.load("img/awesome.png"),
+            }),
         },
     );
 }
