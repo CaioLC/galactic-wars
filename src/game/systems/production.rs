@@ -1,5 +1,6 @@
 use std::f32::consts::PI;
 
+use crate::assets::materials::PlanetMaterial;
 use crate::camera::MouseWorldPos;
 use crate::game::components::{characteristics::*, players::Ownership};
 use crate::game::utils::layers_util::{vec2_to_vec3, Layers};
@@ -172,13 +173,13 @@ pub fn update_count_mesh(mut q_child: Query<(&Parent, &mut TextMesh)>, q_parent:
 pub fn take_planet_ownership(
     mut ev_reader: EventReader<TakeOwnership>,
     players: Res<player_res::RegisteredPlayers>,
-    mut query: Query<(With<Planet>, &mut Ownership, &mut Handle<StandardMaterial>)>,
+    mut query: Query<(With<Planet>, &mut Ownership, &mut Handle<PlanetMaterial>)>,
 ) {
     for event in ev_reader.iter() {
         let player_details = players.0.get(&event.owner).unwrap();
         if let Ok((_, mut p_owner, mut p_material)) = query.get_mut(event.entity) {
             p_owner.0 = Some(event.owner);
-            *p_material = player_details.color.clone();
+            *p_material = player_details.new_color.clone();
         }
     }
 }

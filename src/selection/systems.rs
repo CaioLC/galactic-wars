@@ -97,6 +97,11 @@ pub fn draw_box_select(
                     *box_mesh = meshes.add(box_select_mesh(ms_enter, ms_pos.0));
                     transform.translation =
                         layers_util::vec2_to_vec3(ms_enter, layers_util::Layers::BoxSelect);
+                    // *box_material = materials.add(SelectBoxMaterial {
+                    //     color_outline: Color::LIME_GREEN,
+                    //     bottom_left: ms_enter,
+                    //     top_right: ms_pos.0,
+                    // })
                 }
                 Err(error) => {
                     match error {
@@ -104,12 +109,18 @@ pub fn draw_box_select(
                             // let quad_handle = meshes.add(box_select_mesh(ms_enter, ms_pos.0));
                             let quad_handle = meshes.add(box_select_mesh(ms_enter, ms_pos.0));
                             let material_handle = materials.add(StandardMaterial {
-                                base_color: Color::LIME_GREEN,
+                                base_color: Color::Rgba {
+                                    red: 0.2,
+                                    green: 0.8,
+                                    blue: 0.2,
+                                    alpha: 0.3,
+                                },
                                 unlit: true,
+                                alpha_mode: AlphaMode::Blend,
                                 ..default()
                             });
                             commands
-                                .spawn_bundle(PbrBundle {
+                                .spawn_bundle(MaterialMeshBundle {
                                     mesh: quad_handle.clone(),
                                     material: material_handle,
                                     transform: Transform {

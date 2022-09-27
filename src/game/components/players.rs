@@ -1,7 +1,7 @@
 use bevy::{prelude::*, utils::Uuid};
 use bevy_rapier3d::prelude::*;
 
-use crate::assets::materials::CoolMaterial;
+use crate::assets::materials::PlanetMaterial;
 
 #[derive(Component)]
 pub struct Ownership(pub Option<Uuid>);
@@ -9,7 +9,7 @@ pub struct Ownership(pub Option<Uuid>);
 pub struct PlayerDetails {
     pub name: String,
     pub color: Handle<StandardMaterial>,
-    pub new_color: Handle<CoolMaterial>,
+    pub new_color: Handle<PlanetMaterial>,
 }
 
 #[derive(Component)]

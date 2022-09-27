@@ -1,7 +1,6 @@
 use crate::state::GameState;
 use bevy::prelude::*;
 use iyes_loopless::prelude::*;
-
 mod systems;
 use systems::*;
 pub mod components;

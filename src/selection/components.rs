@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 #[cfg_attr(feature = "debug", derive(bevy_inspector_egui::Inspectable))]
-#[derive(Component)]
+#[derive(Component, Clone, Copy)]
 pub struct Selected;
 
 #[cfg_attr(feature = "debug", derive(bevy_inspector_egui::Inspectable))]

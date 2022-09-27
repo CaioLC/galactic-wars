@@ -12,7 +12,7 @@ use bevy::{diagnostic::FrameTimeDiagnosticsPlugin, prelude::*};
 #[cfg(feature = "debug")]
 use bevy_inspector_egui::{InspectorPlugin, RegisterInspectable, WorldInspectorPlugin};
 
-use assets::{materials::CoolMaterial, AssetsPlugin};
+use assets::{materials::PlanetMaterial, AssetsPlugin};
 use camera::CameraPlugin;
 use game::GamePlugin;
 use selection::SelectionPlugin;
@@ -30,10 +30,10 @@ fn main() {
     .add_plugins(DefaultPlugins)
     .insert_resource(Msaa { samples: 4 })
     .add_plugin(FrameTimeDiagnosticsPlugin::default())
+    .add_plugin(MaterialPlugin::<PlanetMaterial>::default())
     .add_plugin(CameraPlugin)
     .add_plugin(StatePlugin)
     .add_plugin(SelectionPlugin)
-    .add_plugin(MaterialPlugin::<CoolMaterial>::default())
     .add_plugin(GamePlugin)
     .add_plugin(AssetsPlugin)
     .add_plugin(UiPlugin);

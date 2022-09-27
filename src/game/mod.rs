@@ -7,14 +7,20 @@ pub mod utils;
 use std::{f32::consts::PI, time::Duration};
 
 use bevy::{
+    pbr::RenderMaterials,
     prelude::*,
+    render::{
+        render_resource::{encase, OwnedBindingResource, ShaderType},
+        renderer::RenderQueue,
+        Extract, RenderApp, RenderStage,
+    },
     utils::{HashMap, Uuid},
 };
 use bevy_rapier3d::prelude::*;
 use bevy_text_mesh::prelude::*;
 use iyes_loopless::prelude::*;
 
-use crate::{assets::materials::CoolMaterial, state::GameState};
+use crate::{assets::materials::PlanetMaterial, selection::components::Selected, state::GameState};
 
 use components::{
     characteristics::*,
@@ -86,6 +92,10 @@ impl Plugin for GamePlugin {
                     .into(),
             );
 
+        app.sub_app_mut(RenderApp)
+            .add_system_to_stage(RenderStage::Extract, extract_my_material)
+            .add_system_to_stage(RenderStage::Prepare, prepare_my_material);
+
         #[cfg(feature = "debug")]
         app.add_plugin(RapierDebugRenderPlugin::default());
     }
@@ -99,7 +109,7 @@ fn setup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    mut my_material_assets: ResMut<Assets<CoolMaterial>>,
+    mut my_material_assets: ResMut<Assets<PlanetMaterial>>,
     mut money: ResMut<PlayerMoney>,
     mut allegiances_to_others: ResMut<AllegiancesToOthers>,
 ) {
@@ -216,7 +226,7 @@ fn setup_players(
     players: &mut ResMut<RegisteredPlayers>,
     money: &mut ResMut<PlayerMoney>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
-    my_materials: &mut ResMut<Assets<CoolMaterial>>,
+    my_materials: &mut ResMut<Assets<PlanetMaterial>>,
     allegiances_to_others: &mut ResMut<AllegiancesToOthers>,
     assets: &Res<AssetServer>,
 ) {
@@ -262,7 +272,7 @@ fn setup_initial_resources(
 fn register_players(
     players: &mut ResMut<RegisteredPlayers>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
-    my_materials: &mut ResMut<Assets<CoolMaterial>>,
+    my_materials: &mut ResMut<Assets<PlanetMaterial>>,
     assets: &Res<AssetServer>,
 ) {
     players.0.insert(
@@ -276,9 +286,9 @@ fn register_players(
                     ..Default::default()
                 })
                 .into(),
-            new_color: my_materials.add(CoolMaterial {
+            new_color: my_materials.add(PlanetMaterial {
                 color: Color::BLUE,
-                image: assets.load("img/awesome.png"),
+                image: assets.load("img/Planet2_7.png"),
             }),
         },
     );
@@ -293,9 +303,9 @@ fn register_players(
                     ..Default::default()
                 })
                 .into(),
-            new_color: my_materials.add(CoolMaterial {
+            new_color: my_materials.add(PlanetMaterial {
                 color: Color::RED,
-                image: assets.load("img/awesome.png"),
+                image: assets.load("img/Planet_59.png"),
             }),
         },
     );
@@ -311,4 +321,41 @@ fn random_planet_pos(game_config: &Res<InitGameSetup>) -> Transform {
     Transform::from_xyz(x, y, z)
 }
 
-// fn random_player_pos() -> Transform {}
+fn prepare_my_material(
+    materials: Res<RenderMaterials<PlanetMaterial>>,
+    selected_query: Query<(&Selected, &Handle<PlanetMaterial>)>,
+    render_queue: Res<RenderQueue>,
+) {
+    for (_, handle) in &selected_query {
+        if let Some(material) = materials.get(handle) {
+            for binding in material.bindings.iter() {
+                if let OwnedBindingResource::Buffer(cur_buffer) = binding {
+                    let mut buffer = encase::UniformBuffer::new(Vec::new());
+                    buffer
+                        .write(&CoolMaterialUniformData {
+                            color: Color::YELLOW,
+                        })
+                        .unwrap();
+                    render_queue.write_buffer(cur_buffer, 0, buffer.as_ref());
+                }
+            }
+        }
+    }
+}
+
+fn extract_my_material(
+    mut commands: Commands,
+    health_query: Extract<Query<(Entity, &Selected, &Handle<PlanetMaterial>)>>,
+) {
+    for (entity, selected, handle) in health_query.iter() {
+        commands
+            .get_or_spawn(entity)
+            .insert(*selected)
+            .insert(handle.clone());
+    }
+}
+
+#[derive(Clone, ShaderType)]
+struct CoolMaterialUniformData {
+    color: Color,
+}
